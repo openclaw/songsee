@@ -10,6 +10,8 @@ export function css() {
   --accent:#6f4cff;
   --accent-soft:rgba(111,76,255,.10);
   --accent-strong:#5938e5;
+  --btn-primary-bg:#5938e5;
+  --btn-primary-bg-hover:#4528c4;
   --s-violet:#6f4cff;--s-magenta:#e0438a;--s-amber:#ff8b3d;--s-cyan:#36d3c4;
   --line:#e5e7eb;
   --line-soft:#eef0f3;
@@ -38,6 +40,8 @@ export function css() {
   --accent:#a48bff;
   --accent-soft:rgba(164,139,255,.16);
   --accent-strong:#bda8ff;
+  --btn-primary-bg:#5938e5;
+  --btn-primary-bg-hover:#7253ff;
   --line:#262a36;
   --line-soft:#1d2029;
   --code-bg:#06080d;
@@ -104,12 +108,12 @@ main{min-width:0;padding:32px clamp(20px,4.5vw,56px) 80px;max-width:1180px;margi
 .repo:hover,.edit:hover,.btn-ghost:hover{border-color:var(--ink);color:var(--ink);text-decoration:none}
 .edit{color:var(--muted)}
 .home-hero{padding:14px 0 28px;margin-bottom:8px;border-bottom:1px solid var(--line)}
-.home-hero h1{font-size:3.25rem;line-height:1.04;letter-spacing:0;margin:0 0 .35em;font-weight:700;color:var(--ink);background:linear-gradient(120deg,var(--s-violet),var(--s-magenta) 45%,var(--s-amber) 80%,var(--s-cyan));-webkit-background-clip:text;background-clip:text;color:transparent}
+.home-hero h1{font-size:3.25rem;line-height:1.18;letter-spacing:0;margin:0 0 .25em;padding-bottom:.08em;font-weight:700;background:linear-gradient(120deg,var(--s-violet),var(--s-magenta) 45%,var(--s-amber) 80%,var(--s-cyan));-webkit-background-clip:text;background-clip:text;color:transparent}
 .home-hero .lede{font-size:1.18rem;line-height:1.55;color:var(--text);margin:0 0 1.2em;max-width:60ch}
 .home-cta{display:flex;flex-wrap:wrap;gap:10px;align-items:center;margin:0 0 18px}
 .home-cta .btn{display:inline-flex;align-items:center;gap:7px;border-radius:8px;padding:10px 16px;font-weight:600;font-size:.92rem;text-decoration:none;transition:background .15s,border-color .15s,color .15s,transform .12s}
-.home-cta .btn-primary{background:var(--accent);color:#fff;border:1px solid var(--accent)}
-.home-cta .btn-primary:hover{background:var(--accent-strong);border-color:var(--accent-strong);text-decoration:none}
+.home-cta .btn-primary{background:var(--btn-primary-bg);color:#fff;border:1px solid var(--btn-primary-bg)}
+.home-cta .btn-primary:hover{background:var(--btn-primary-bg-hover);border-color:var(--btn-primary-bg-hover);text-decoration:none;color:#fff}
 .home-cta .btn-ghost{padding:10px 16px}
 .home-install{display:flex;align-items:center;gap:12px;background:var(--code-bg);color:var(--code-fg);border-radius:8px;padding:10px 10px 10px 16px;font:500 .9rem/1.2 "JetBrains Mono","SF Mono",ui-monospace,monospace;max-width:32em;border:1px solid #1f2937}
 .home-install .prompt{color:#64748b;user-select:none;flex:0 0 auto}
