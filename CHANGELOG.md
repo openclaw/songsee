@@ -3,7 +3,7 @@
 ## 0.1.1 - Unreleased
 
 - New Clawd style
-- Docs: rewritten gogcli-style — plain-markdown pages for install, quickstart, visualizations, palettes, decoding, rendering, pipeline, and CLI; removed custom Jekyll theme so songsee.sh runs on the default GitHub Pages theme
+- Docs: rewritten gogcli-style — plain-markdown pages for install, quickstart, visualizations, palettes, decoding, rendering, pipeline, and CLI; new custom static-site builder (`make docs-site`) and `pages.yml` workflow render songsee.sh with a sidebar nav, search, dark-mode toggle, and per-page TOC
 
 ## 0.1.0 - 2026-01-02
 
