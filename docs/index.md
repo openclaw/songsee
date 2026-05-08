@@ -16,7 +16,7 @@ body_class: home
     </p>
     <div class="hero-actions reveal delay-4">
       <a class="btn primary" href="#install">Install</a>
-      <a class="btn" href="https://github.com/steipete/songsee">GitHub</a>
+      <a class="btn" href="https://github.com/openclaw/songsee">GitHub</a>
     </div>
     <div class="hero-meta reveal delay-4">Hann window. Log magnitude. 2048 / 512 defaults.</div>
   </div>
