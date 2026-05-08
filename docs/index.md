@@ -1,113 +1,51 @@
 ---
-layout: default
-title: Home
-description: Generate modern spectrogram images from audio files with a fast, scriptable CLI.
-body_class: home
+title: Overview
+permalink: /
+description: "songsee is a single Go CLI that turns audio into modern spectrogram and feature-panel images — fast WAV/MP3 decode, ffmpeg fallback, nine visualization modes, six palettes."
 ---
 
-<section class="hero">
-  <div class="hero-copy">
-    <div class="kicker reveal delay-1">Spectral imaging CLI</div>
-    <h1 class="hero-title reveal delay-2">See sound as living color.</h1>
-    <p class="hero-sub reveal delay-3">
-      songsee turns audio into precise, high-resolution spectrograms and feature panels. Fast decode
-      paths for WAV and MP3, ffmpeg fallback for everything else, and palette styles that make science
-      look cinematic.
-    </p>
-    <div class="hero-actions reveal delay-4">
-      <a class="btn primary" href="#install">Install</a>
-      <a class="btn" href="https://github.com/openclaw/songsee">GitHub</a>
-    </div>
-    <div class="hero-meta reveal delay-4">Hann window. Log magnitude. 2048 / 512 defaults.</div>
-  </div>
-  <div class="hero-visual">
-    <div class="spectral-panel" role="img" aria-label="Animated spectrogram preview">
-      <div class="spectral-caption">Spectrogram preview</div>
-    </div>
-  </div>
-</section>
+## Try it
 
-<section class="section">
-  <div class="kicker">Why songsee</div>
-  <h2 class="section-title">A focused pipeline for modern spectrograms.</h2>
-  <p class="section-sub">
-    Decode audio into mono samples, window it with Hann, run FFT, and render log-magnitude frames into
-    a crisp image. The CLI stays small, reliable, and scriptable.
-  </p>
+After [installing](install.md), every render is a one-liner.
 
-  <div class="feature-grid">
-    <div class="card">
-      <h3>Precise controls</h3>
-      <p>Window, hop, min/max frequency, output dimensions, and time slicing for exact framing.</p>
-    </div>
-    <div class="card">
-      <h3>Fast decode paths</h3>
-      <p>Native WAV/MP3 decoding with ffmpeg fallback for everything else.</p>
-    </div>
-    <div class="card">
-      <h3>Palette styles</h3>
-      <p>classic, magma, inferno, viridis, and gray for a bold spectral aesthetic.</p>
-    </div>
-    <div class="card">
-      <h3>Feature panels</h3>
-      <p>mel, chroma, hpss, selfsim, loudness, tempogram, mfcc, flux — rendered as single or grid views.</p>
-    </div>
-    <div class="card">
-      <h3>Auto-contrast</h3>
-      <p>Percentile clamping keeps every panel readable without manual tuning.</p>
-    </div>
-    <div class="card">
-      <h3>Clean output</h3>
-      <p>JPEG or PNG output, default quality 95, and stable results for batch workflows.</p>
-    </div>
-  </div>
-</section>
+```bash
+# Default: a clean spectrogram next to the input file.
+songsee track.mp3
 
-<section class="section" id="install">
-  <div class="kicker">Install</div>
-  <h2 class="section-title">One command. Instant spectrograms.</h2>
-  <div class="code-block">
-    brew install steipete/tap/songsee
-    go install github.com/steipete/songsee/cmd/songsee@latest
-  </div>
-  <div class="domain-note">
-    songsee.ai, songsee.app, and songsee.dev all redirect to songsee.sh.
-  </div>
-</section>
+# Mel spectrogram, magma palette, 2K wide.
+songsee track.mp3 --viz mel --style magma --width 2048 --height 1024
 
-<section class="section" id="usage">
-  <div class="kicker">Usage</div>
-  <h2 class="section-title">CLI ready for pipes, batches, and automation.</h2>
-  <div class="code-block">
-    songsee track.mp3
-    songsee track.wav --style magma --width 2048 --height 1024 -o spectro.png
-    cat track.mp3 | songsee - --style gray --format png
-    songsee track.mp3 --start 12.5 --duration 8 --output slice.jpg
-    songsee track.mp3 --viz spectrogram,mel,chroma --width 2048 --height 1024
-  </div>
-</section>
+# All nine modes in one grid.
+songsee track.mp3 --viz spectrogram,mel,chroma,hpss,selfsim,loudness,tempogram,mfcc,flux
 
-<section class="section">
-  <div class="kicker">Palettes</div>
-  <h2 class="section-title">Color maps with character.</h2>
-  <p class="section-sub">Pick a palette by name for instant visual tone shifts.</p>
-  <div class="palette-row">
-    <div class="palette classic" title="classic"></div>
-    <div class="palette magma" title="magma"></div>
-    <div class="palette inferno" title="inferno"></div>
-    <div class="palette viridis" title="viridis"></div>
-    <div class="palette gray" title="gray"></div>
-    <div class="palette clawd" title="clawd">🦞</div>
-  </div>
-</section>
+# Slice eight seconds out of a long file.
+songsee track.mp3 --start 12.5 --duration 8 -o slice.jpg
 
-<section class="section">
-  <div class="kicker">Specs</div>
-  <h2 class="section-title">Detailed pipeline notes.</h2>
-  <p class="section-sub">
-    Windowing, bin mapping, normalization, and rendering details live in the spec.
-  </p>
-  <div class="hero-actions">
-    <a class="btn" href="{{ '/spec/' | relative_url }}">Read spec</a>
-  </div>
-</section>
+# Pipe from stdin, write PNG to stdout.
+cat track.mp3 | songsee - --format png -o - > spectro.png
+```
+
+The default output is a 1920×1080 JPEG (quality 95) written next to the input. `--format png` switches encoder, `-o` redirects the path, and `-o -` streams to stdout for piping.
+
+## What songsee does
+
+- **One binary, nine views.** spectrogram, mel, chroma, hpss, selfsim, loudness, tempogram, mfcc, flux — pick one, combine several, or render the full grid.
+- **Fast decode paths.** Native Go decoders for WAV (PCM, float, extensible) and MP3; ffmpeg fallback covers everything else.
+- **Six palettes.** classic, magma, inferno, viridis, gray, and clawd 🦞 — each tuned for log-magnitude data.
+- **Auto-contrast.** Per-panel percentile clamping (0.05 / 0.98) keeps every visualization readable without manual tuning.
+- **Scriptable I/O.** File path, stdin (`-`), or stdout. Quiet mode for CI; verbose mode prints decode and slice details to stderr.
+- **No Python.** Single static binary. No model files, no virtualenv, no GPU.
+
+## Pick your path
+
+- **Trying it.** [Install](install.md) → [Quickstart](quickstart.md). One brew formula, one command, one image.
+- **Picking a view.** [Visualizations](visualizations.md) describes what each of the nine modes shows and when to use it.
+- **Picking a palette.** [Palettes](palettes.md) lists the six palettes with their gradient stops.
+- **Audio inputs.** [Decoding](decoding.md) covers WAV/MP3 fast paths, ffmpeg fallback, sample rate, and stdin.
+- **Output and batches.** [Rendering](rendering.md) explains output sizing, grid layout, format selection, and stdout streaming.
+- **Algorithm details.** [Pipeline](spec.md) documents windowing, FFT, bin mapping, and normalization.
+- **Flag reference.** [CLI](cli.md) lists every flag with its default.
+
+## Project
+
+Active development; the [changelog](https://github.com/openclaw/songsee/blob/main/CHANGELOG.md) tracks what shipped. Released under the [MIT license](https://github.com/openclaw/songsee/blob/main/LICENSE). Source on [GitHub](https://github.com/openclaw/songsee).
