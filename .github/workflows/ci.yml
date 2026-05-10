@@ -27,4 +27,5 @@ jobs:
             | sh -s -- -b "$(go env GOPATH)/bin" v2.7.2
 
       - name: Lint
-        run: "$(go env GOPATH)/bin/golangci-lint" run --timeout=3m
+        run: |
+          "$(go env GOPATH)/bin/golangci-lint" run --timeout=3m
