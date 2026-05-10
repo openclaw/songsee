@@ -4,6 +4,7 @@ package render
 import (
 	"errors"
 	"image/color"
+	"strings"
 )
 
 // Palette maps a normalized value to a color.
@@ -12,6 +13,13 @@ type Palette func(t float64) color.RGBA
 type stop struct {
 	pos float64
 	c   color.RGBA
+}
+
+var paletteNames = []string{"classic", "magma", "inferno", "viridis", "gray", "clawd"}
+
+// PaletteHelp returns the supported palette list in help-text order.
+func PaletteHelp() string {
+	return strings.Join(paletteNames, ", ")
 }
 
 // PaletteByName returns a palette for a given name.
@@ -50,14 +58,13 @@ func PaletteByName(name string) (Palette, error) {
 			{1.0, rgb(253, 231, 37)},
 		}), nil
 	case "clawd":
-		// 🦞 Lobster from the deep! Ocean depths to coral brightness
 		return gradient([]stop{
-			{0.0, rgb(2, 4, 15)},      // Abyss black-blue
-			{0.2, rgb(11, 38, 74)},    // Deep ocean navy
-			{0.4, rgb(18, 97, 117)},   // Ocean teal
-			{0.6, rgb(193, 98, 92)},   // Coral/salmon
-			{0.8, rgb(205, 55, 40)},   // Lobster red! 🦞
-			{1.0, rgb(255, 230, 210)}, // Foam/shell highlight
+			{0.0, rgb(2, 4, 15)},
+			{0.2, rgb(11, 38, 74)},
+			{0.4, rgb(18, 97, 117)},
+			{0.6, rgb(193, 98, 92)},
+			{0.8, rgb(205, 55, 40)},
+			{1.0, rgb(255, 230, 210)},
 		}), nil
 	case "gray", "grey":
 		return gradient([]stop{{0, rgb(0, 0, 0)}, {1, rgb(255, 255, 255)}}), nil

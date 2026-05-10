@@ -68,10 +68,7 @@ func Spectrogram(spec *dsp.Spectrogram, opts Options) (*image.RGBA, error) {
 	frames := spec.Frames
 	bins := spec.Bins
 	for x := 0; x < opts.Width; x++ {
-		frame := 0
-		if frames > 1 && opts.Width > 1 {
-			frame = int(math.Round(float64(x) * float64(frames-1) / float64(opts.Width-1)))
-		}
+		frame := sampleIndex(x, opts.Width, frames)
 		frameOffset := frame * bins
 		for y := 0; y < opts.Height; y++ {
 			pos := 0.0
@@ -98,8 +95,15 @@ func Spectrogram(spec *dsp.Spectrogram, opts Options) (*image.RGBA, error) {
 			if opts.FlipVert {
 				ypos = opts.Height - 1 - y
 			}
-			img.SetRGBA(x, ypos, c)
+			setRGBA(img, x, ypos, c)
 		}
 	}
 	return img, nil
+}
+
+func sampleIndex(pos, dstSize, srcSize int) int {
+	if srcSize <= 1 || dstSize <= 1 {
+		return 0
+	}
+	return int(math.Round(float64(pos) * float64(srcSize-1) / float64(dstSize-1)))
 }

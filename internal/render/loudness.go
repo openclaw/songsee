@@ -31,10 +31,7 @@ func Loudness(values []float64, width, height int, palette Palette) (*image.RGBA
 
 	img := image.NewRGBA(image.Rect(0, 0, width, height))
 	for x := 0; x < width; x++ {
-		srcX := 0
-		if len(values) > 1 && width > 1 {
-			srcX = int(math.Round(float64(x) * float64(len(values)-1) / float64(width-1)))
-		}
+		srcX := sampleIndex(x, width, len(values))
 		norm := values[srcX] / maxVal
 		if norm < 0 {
 			norm = 0
@@ -48,7 +45,7 @@ func Loudness(values []float64, width, height int, palette Palette) (*image.RGBA
 			if y < 0 || y >= height {
 				continue
 			}
-			img.SetRGBA(x, y, col)
+			setRGBA(img, x, y, col)
 		}
 	}
 	return img, nil

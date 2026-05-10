@@ -7,7 +7,7 @@ import (
 	"image/color"
 	"image/draw"
 	"math"
-	"sort"
+	"slices"
 	"strings"
 
 	"github.com/steipete/songsee/internal/dsp"
@@ -39,6 +39,18 @@ var validKinds = map[Kind]struct{}{
 	Tempogram:   {},
 	MFCC:        {},
 	Flux:        {},
+}
+
+var kindNames = []string{
+	string(Spectrogram),
+	string(Mel),
+	string(Chroma),
+	string(HPSS),
+	string(SelfSim),
+	string(Loudness),
+	string(Tempogram),
+	string(MFCC),
+	string(Flux),
 }
 
 // ParseList normalizes a list of viz names, allowing comma-separated values.
@@ -73,12 +85,7 @@ func ParseList(raw []string) ([]Kind, error) {
 
 // KindsHelp returns the supported viz list in deterministic order.
 func KindsHelp() string {
-	names := make([]string, 0, len(validKinds))
-	for kind := range validKinds {
-		names = append(names, string(kind))
-	}
-	sort.Strings(names)
-	return strings.Join(names, ", ")
+	return strings.Join(kindNames, ", ")
 }
 
 // Context holds shared analysis data for multiple visualizations.
@@ -256,7 +263,7 @@ func percentileRange(values []float64, low, high float64) (minVal, maxVal float6
 	if len(sample) == 0 {
 		return 0, 1
 	}
-	sort.Float64s(sample)
+	slices.Sort(sample)
 	lo := percentileIndex(sample, low)
 	hi := percentileIndex(sample, high)
 	minVal = sample[lo]
@@ -272,7 +279,7 @@ func percentileValue(values []float64, pct float64) float64 {
 	if len(sample) == 0 {
 		return 1
 	}
-	sort.Float64s(sample)
+	slices.Sort(sample)
 	return sample[percentileIndex(sample, pct)]
 }
 
@@ -287,7 +294,7 @@ func percentileIndex(values []float64, pct float64) int {
 }
 
 func sampleValues(values []float64, maxSamples int) []float64 {
-	if len(values) == 0 {
+	if len(values) == 0 || maxSamples <= 0 {
 		return nil
 	}
 	if len(values) <= maxSamples {
@@ -295,10 +302,7 @@ func sampleValues(values []float64, maxSamples int) []float64 {
 		copy(out, values)
 		return out
 	}
-	stride := len(values) / maxSamples
-	if stride < 1 {
-		stride = 1
-	}
+	stride := int(math.Ceil(float64(len(values)) / float64(maxSamples)))
 	out := make([]float64, 0, maxSamples)
 	for i := 0; i < len(values); i += stride {
 		out = append(out, values[i])

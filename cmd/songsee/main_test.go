@@ -104,6 +104,9 @@ func TestRunHelp(t *testing.T) {
 	if stdout.String() == "" && stderr.String() == "" {
 		t.Fatalf("expected help output")
 	}
+	if !bytes.Contains(stdout.Bytes(), []byte("palette style:")) || !bytes.Contains(stdout.Bytes(), []byte("clawd")) {
+		t.Fatalf("expected palette help to list clawd")
+	}
 }
 
 func TestRunInvalidWindow(t *testing.T) {
@@ -157,12 +160,36 @@ func TestRunUnknownStyle(t *testing.T) {
 	}
 }
 
+func TestRunUnknownStyleBeforeDecode(t *testing.T) {
+	stdout := &bytes.Buffer{}
+	stderr := &bytes.Buffer{}
+	exit := run([]string{"--style", "nope", "missing.wav"}, bytes.NewReader(nil), stdout, stderr)
+	if exit != 2 {
+		t.Fatalf("expected usage exit before decode, got %d stderr=%s", exit, stderr.String())
+	}
+	if bytes.Contains(stderr.Bytes(), []byte("no such file")) {
+		t.Fatalf("decoded input before rejecting style: %s", stderr.String())
+	}
+}
+
 func TestRunUnknownViz(t *testing.T) {
 	stdout := &bytes.Buffer{}
 	stderr := &bytes.Buffer{}
 	exit := run([]string{"--viz", "nope", "-"}, bytes.NewReader(makeWAV([]int16{0, 1}, 44100, 1)), stdout, stderr)
 	if exit != 2 {
 		t.Fatalf("expected usage exit, got %d", exit)
+	}
+}
+
+func TestRunUnknownVizBeforeDecode(t *testing.T) {
+	stdout := &bytes.Buffer{}
+	stderr := &bytes.Buffer{}
+	exit := run([]string{"--viz", "nope", "missing.wav"}, bytes.NewReader(nil), stdout, stderr)
+	if exit != 2 {
+		t.Fatalf("expected usage exit before decode, got %d stderr=%s", exit, stderr.String())
+	}
+	if bytes.Contains(stderr.Bytes(), []byte("no such file")) {
+		t.Fatalf("decoded input before rejecting viz: %s", stderr.String())
 	}
 }
 

@@ -48,8 +48,9 @@ func TestRenderAllKinds(t *testing.T) {
 }
 
 func TestKindsHelp(t *testing.T) {
-	if KindsHelp() == "" {
-		t.Fatalf("expected help text")
+	want := "spectrogram, mel, chroma, hpss, selfsim, loudness, tempogram, mfcc, flux"
+	if KindsHelp() != want {
+		t.Fatalf("unexpected help text: %s", KindsHelp())
 	}
 }
 
@@ -100,9 +101,18 @@ func TestSampleValues(t *testing.T) {
 	if len(sample) == 0 || len(sample) > 10 {
 		t.Fatalf("unexpected sample size")
 	}
+	large = make([]float64, 101)
+	sample = sampleValues(large, 10)
+	if len(sample) > 10 {
+		t.Fatalf("sample exceeded limit: %d", len(sample))
+	}
 	sample = sampleValues(nil, 10)
 	if sample != nil {
 		t.Fatalf("expected nil sample")
+	}
+	sample = sampleValues(values, 0)
+	if sample != nil {
+		t.Fatalf("expected nil sample with zero max")
 	}
 }
 

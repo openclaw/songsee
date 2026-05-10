@@ -2,6 +2,9 @@
 
 ## 0.1.2 - Unreleased
 
+- CLI: list the `clawd` palette in `--help` and reject invalid `--style`/`--viz` values before decoding input.
+- Rendering: reduce per-pixel overhead in heatmap, spectrogram, and curve drawing.
+
 ## 0.1.1 - 2026-05-10
 
 - New Clawd style

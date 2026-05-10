@@ -4,7 +4,6 @@ package render
 import (
 	"fmt"
 	"image"
-	"math"
 
 	"github.com/steipete/songsee/internal/dsp"
 )
@@ -47,15 +46,9 @@ func Heatmap(mapIn *dsp.FeatureMap, opts HeatmapOptions) (*image.RGBA, error) {
 
 	img := image.NewRGBA(image.Rect(0, 0, opts.Width, opts.Height))
 	for x := 0; x < opts.Width; x++ {
-		srcX := 0
-		if mapIn.Width > 1 && opts.Width > 1 {
-			srcX = int(math.Round(float64(x) * float64(mapIn.Width-1) / float64(opts.Width-1)))
-		}
+		srcX := sampleIndex(x, opts.Width, mapIn.Width)
 		for y := 0; y < opts.Height; y++ {
-			srcY := 0
-			if mapIn.Height > 1 && opts.Height > 1 {
-				srcY = int(math.Round(float64(y) * float64(mapIn.Height-1) / float64(opts.Height-1)))
-			}
+			srcY := sampleIndex(y, opts.Height, mapIn.Height)
 			if opts.FlipVert {
 				srcY = mapIn.Height - 1 - srcY
 			}
@@ -67,7 +60,7 @@ func Heatmap(mapIn *dsp.FeatureMap, opts HeatmapOptions) (*image.RGBA, error) {
 			if norm > 1 {
 				norm = 1
 			}
-			img.SetRGBA(x, y, opts.Palette(norm))
+			setRGBA(img, x, y, opts.Palette(norm))
 		}
 	}
 	return img, nil

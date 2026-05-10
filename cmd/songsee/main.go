@@ -35,8 +35,8 @@ type cli struct {
 	StartSec   float64          `name:"start" help:"start time in seconds"`
 	Duration   float64          `name:"duration" help:"duration in seconds (0 = full)"`
 	SampleRate int              `name:"sample-rate" help:"ffmpeg output sample rate" default:"44100"`
-	Style      string           `help:"palette style: classic, magma, inferno, viridis, gray" default:"classic"`
-	Viz        []string         `name:"viz" help:"visualizations (repeatable or comma-separated): spectrogram, mel, chroma, hpss, selfsim, loudness, tempogram, mfcc, flux"`
+	Style      string           `help:"palette style: ${styles}" default:"classic"`
+	Viz        []string         `name:"viz" help:"visualizations (repeatable or comma-separated): ${viz}"`
 	FFmpegPath string           `name:"ffmpeg" help:"path to ffmpeg binary"`
 	Quiet      bool             `short:"q" help:"suppress stdout output"`
 	Verbose    bool             `short:"v" help:"verbose stderr output"`
@@ -59,7 +59,7 @@ func run(args []string, stdin io.Reader, stdout, stderr io.Writer) int {
 	parser, err := kong.New(&cfg,
 		kong.Name("songsee"),
 		kong.Description("generate spectral visualizations"),
-		kong.Vars{"version": version},
+		kong.Vars{"version": version, "styles": render.PaletteHelp(), "viz": viz.KindsHelp()},
 		kong.Writers(stdout, stderr),
 		kong.Exit(func(code int) { panic(exitPanic{code: code}) }),
 	)
@@ -153,6 +153,17 @@ func run(args []string, stdin io.Reader, stdout, stderr io.Writer) int {
 		}
 	}
 
+	style := strings.ToLower(strings.TrimSpace(cfg.Style))
+	palette, err := render.PaletteByName(style)
+	if err != nil {
+		return dieUsage(stderr, ctx, "unknown style")
+	}
+
+	vizList, err := viz.ParseList(cfg.Viz)
+	if err != nil {
+		return dieUsage(stderr, ctx, err.Error())
+	}
+
 	if cfg.Verbose {
 		_, _ = fmt.Fprintf(stderr, "input: %s\n", input)
 		_, _ = fmt.Fprintf(stderr, "output: %s (%s)\n", output, format)
@@ -182,17 +193,6 @@ func run(args []string, stdin io.Reader, stdout, stderr io.Writer) int {
 		if cfg.Verbose {
 			_, _ = fmt.Fprintf(stderr, "slice: %0.2fs + %0.2fs => %d samples\n", cfg.StartSec, cfg.Duration, len(pcm.Samples))
 		}
-	}
-
-	style := strings.ToLower(strings.TrimSpace(cfg.Style))
-	palette, err := render.PaletteByName(style)
-	if err != nil {
-		return dieUsage(stderr, ctx, "unknown style")
-	}
-
-	vizList, err := viz.ParseList(cfg.Viz)
-	if err != nil {
-		return dieUsage(stderr, ctx, err.Error())
 	}
 
 	layout, err := gridLayout(len(vizList), cfg.Width, cfg.Height, 8)
