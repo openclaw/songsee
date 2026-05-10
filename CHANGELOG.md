@@ -2,12 +2,13 @@
 
 ## 0.1.2 - Unreleased
 
-- CLI: list the `clawd` palette in `--help` and reject invalid `--style`/`--viz` values before decoding input.
+- CLI: list the `claw` palette in `--help` and reject invalid `--style`/`--viz` values before decoding input.
+- Palettes: rename `clawd` to `claw`; the old name remains accepted as a compatibility alias.
 - Rendering: reduce per-pixel overhead in heatmap, spectrogram, and curve drawing.
 
 ## 0.1.1 - 2026-05-10
 
-- New Clawd style
+- New Claw style
 - Docs: rewritten gogcli-style — plain-markdown pages for install, quickstart, visualizations, palettes, decoding, rendering, pipeline, and CLI; new custom static-site builder (`make docs-site`) and `pages.yml` workflow render songsee.sh with a sidebar nav, search, dark-mode toggle, and per-page TOC
 - Source builds: `make` now injects the `git describe` version string
 - Dependencies: updated Kong to 1.15.0

@@ -9,13 +9,13 @@ import (
 )
 
 func TestPaletteByName(t *testing.T) {
-	names := []string{"classic", "magma", "inferno", "viridis", "gray", "grey", "clawd"}
+	names := []string{"classic", "magma", "inferno", "viridis", "gray", "grey", "claw", "clawd"}
 	for _, name := range names {
 		if _, err := PaletteByName(name); err != nil {
 			t.Fatalf("palette %s: %v", name, err)
 		}
 	}
-	if PaletteHelp() != "classic, magma, inferno, viridis, gray, clawd" {
+	if PaletteHelp() != "classic, magma, inferno, viridis, gray, claw" {
 		t.Fatalf("unexpected palette help: %s", PaletteHelp())
 	}
 	if _, err := PaletteByName("nope"); err == nil {

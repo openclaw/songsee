@@ -1,6 +1,6 @@
 ---
 title: Palettes
-description: "Six built-in color maps for songsee: classic, magma, inferno, viridis, gray, clawd."
+description: "Six built-in color maps for songsee: classic, magma, inferno, viridis, gray, claw."
 ---
 
 # Palettes
@@ -10,7 +10,7 @@ description: "Six built-in color maps for songsee: classic, magma, inferno, viri
 ```bash
 songsee track.mp3 --style magma
 songsee track.mp3 --viz mel --style viridis
-songsee track.mp3 --viz hpss,chroma --style clawd
+songsee track.mp3 --viz hpss,chroma --style claw
 ```
 
 Unknown names error out before decoding. All palettes are deterministic — the same input always produces the same colors.
@@ -74,7 +74,7 @@ A straight black-to-white linear ramp. Ideal for print, monochrome compositing, 
 
 `grey` is accepted as an alias.
 
-## clawd 🦞
+## claw
 
 The mascot palette. Abyssal navy → ocean teal → coral → lobster red → foam highlight. Six stops, designed to be unmistakable.
 
@@ -86,6 +86,8 @@ The mascot palette. Abyssal navy → ocean teal → coral → lobster red → fo
 | 0.60 | `#c1625c` |
 | 0.80 | `#cd3728` |
 | 1.00 | `#ffe6d2` |
+
+`clawd` remains accepted as a legacy alias.
 
 ## Related pages
 

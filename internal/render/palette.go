@@ -15,7 +15,7 @@ type stop struct {
 	c   color.RGBA
 }
 
-var paletteNames = []string{"classic", "magma", "inferno", "viridis", "gray", "clawd"}
+var paletteNames = []string{"classic", "magma", "inferno", "viridis", "gray", "claw"}
 
 // PaletteHelp returns the supported palette list in help-text order.
 func PaletteHelp() string {
@@ -57,7 +57,7 @@ func PaletteByName(name string) (Palette, error) {
 			{0.75, rgb(94, 201, 98)},
 			{1.0, rgb(253, 231, 37)},
 		}), nil
-	case "clawd":
+	case "claw", "clawd":
 		return gradient([]stop{
 			{0.0, rgb(2, 4, 15)},
 			{0.2, rgb(11, 38, 74)},

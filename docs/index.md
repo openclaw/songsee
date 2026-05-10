@@ -31,7 +31,7 @@ The default output is a 1920×1080 JPEG (quality 95) written next to the input. 
 
 - **One binary, nine views.** spectrogram, mel, chroma, hpss, selfsim, loudness, tempogram, mfcc, flux — pick one, combine several, or render the full grid.
 - **Fast decode paths.** Native Go decoders for WAV (PCM, float, extensible) and MP3; ffmpeg fallback covers everything else.
-- **Six palettes.** classic, magma, inferno, viridis, gray, and clawd 🦞 — each tuned for log-magnitude data.
+- **Six palettes.** classic, magma, inferno, viridis, gray, and claw — each tuned for log-magnitude data.
 - **Auto-contrast.** Per-panel percentile clamping (0.05 / 0.98) keeps every visualization readable without manual tuning.
 - **Scriptable I/O.** File path, stdin (`-`), or stdout. Quiet mode for CI; verbose mode prints decode and slice details to stderr.
 - **No Python.** Single static binary. No model files, no virtualenv, no GPU.

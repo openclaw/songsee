@@ -45,7 +45,7 @@ songsee <input> [flags]
 | flag | type | default | description |
 |------|------|---------|-------------|
 | `--viz` | repeated string list | `spectrogram` | One or more of: `spectrogram`, `mel`, `chroma`, `hpss`, `selfsim`, `loudness`, `tempogram`, `mfcc`, `flux`. Repeatable or comma-separated. |
-| `--style` | string | `classic` | Palette name: `classic`, `magma`, `inferno`, `viridis`, `gray` (alias `grey`), `clawd`. |
+| `--style` | string | `classic` | Palette name: `classic`, `magma`, `inferno`, `viridis`, `gray` (alias `grey`), `claw` (legacy alias `clawd`). |
 
 ## Decoding
 

@@ -5,7 +5,7 @@
 ## Features
 
 - **9 visualization modes**: spectrogram, mel, chroma, hpss, selfsim, loudness, tempogram, mfcc, flux
-- **6 color palettes**: classic, magma, inferno, viridis, gray, clawd
+- **6 color palettes**: classic, magma, inferno, viridis, gray, claw
 - **Auto-contrast**: per-panel percentile normalization for readable heatmaps
 - **Combine modes**: stack multiple visualizations in one grid image
 - **Universal input**: WAV, MP3, or anything ffmpeg can handle
@@ -54,7 +54,7 @@ songsee track.mp3 --viz hpss,chroma --style inferno -o viz.png --width 2560 --he
 
 ## Palettes
 
-`classic` · `magma` · `inferno` · `viridis` · `gray` · `clawd` 🦞
+`classic` · `magma` · `inferno` · `viridis` · `gray` · `claw`
 
 ## Options
 

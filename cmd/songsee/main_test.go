@@ -104,8 +104,11 @@ func TestRunHelp(t *testing.T) {
 	if stdout.String() == "" && stderr.String() == "" {
 		t.Fatalf("expected help output")
 	}
-	if !bytes.Contains(stdout.Bytes(), []byte("palette style:")) || !bytes.Contains(stdout.Bytes(), []byte("clawd")) {
-		t.Fatalf("expected palette help to list clawd")
+	if !bytes.Contains(stdout.Bytes(), []byte("palette style:")) || !bytes.Contains(stdout.Bytes(), []byte("claw")) {
+		t.Fatalf("expected palette help to list claw")
+	}
+	if bytes.Contains(stdout.Bytes(), []byte("clawd")) {
+		t.Fatalf("expected palette help to hide legacy clawd alias")
 	}
 }
 
