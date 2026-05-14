@@ -2,6 +2,7 @@
 
 ## 0.1.2 - Unreleased
 
+- Docker: add a local image with bundled `ffmpeg` and CI smoke coverage.
 - CLI: list the `claw` palette in `--help` and reject invalid `--style`/`--viz` values before decoding input.
 - Palettes: rename `clawd` to `claw`; the old name remains accepted as a compatibility alias.
 - Rendering: reduce per-pixel overhead in heatmap, spectrogram, and curve drawing.

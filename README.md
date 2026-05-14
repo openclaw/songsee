@@ -22,6 +22,15 @@ brew install steipete/tap/songsee
 go install github.com/steipete/songsee/cmd/songsee@latest
 ```
 
+Docker:
+
+```bash
+docker build -t songsee .
+docker run --rm -v "$PWD:/input:ro" -v "$PWD/out:/output" songsee /input/track.mp3 --output /output/track.png
+```
+
+The image includes `ffmpeg`, so batch and server runs do not depend on host audio tooling.
+
 ## Quick Start
 
 ```bash
