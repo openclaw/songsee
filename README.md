@@ -1,3 +1,5 @@
+![songsee banner](docs/assets/readme-banner.jpg)
+
 # 🌊 songsee — FFT so pretty, your ears will be jealous.
 
 ![9-mode visualization example](example.png)
