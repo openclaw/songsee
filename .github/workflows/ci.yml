@@ -22,7 +22,13 @@ jobs:
         run: go test ./... -cover
 
       - name: Deadcode
-        run: go run golang.org/x/tools/cmd/deadcode@v0.45.0 -test ./...
+        run: |
+          output_file=$(mktemp)
+          go run golang.org/x/tools/cmd/deadcode@v0.45.0 -test ./... > "$output_file"
+          if [ -s "$output_file" ]; then
+            cat "$output_file"
+            exit 1
+          fi
 
       - name: Install golangci-lint
         run: |
