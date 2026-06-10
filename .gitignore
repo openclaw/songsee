@@ -34,3 +34,4 @@ go.work.sum
 # Build output
 /bin/
 /dist/
+/songsee
