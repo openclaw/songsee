@@ -2,6 +2,7 @@
 
 ## 0.1.2 - Unreleased
 
+- Install: make `go install ...@latest` builds report their tagged module version instead of `dev`.
 - Build and CI: update to Go 1.26, Alpine 3.24, current analysis tools, and pinned GitHub Actions.
 - Docker: add a local image with bundled `ffmpeg` and CI smoke coverage.
 - CLI: list the `claw` palette in `--help` and reject invalid `--style`/`--viz` values before decoding input.
