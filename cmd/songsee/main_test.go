@@ -7,6 +7,7 @@ import (
 	"math"
 	"os"
 	"path/filepath"
+	"runtime/debug"
 	"testing"
 )
 
@@ -91,6 +92,28 @@ func TestRunVersion(t *testing.T) {
 	}
 	if stdout.String() == "" {
 		t.Fatalf("expected version output")
+	}
+}
+
+func TestResolveVersion(t *testing.T) {
+	tests := []struct {
+		name     string
+		injected string
+		module   string
+		want     string
+	}{
+		{name: "linker override", injected: "v1.2.3", module: "v9.9.9", want: "v1.2.3"},
+		{name: "module version", injected: "dev", module: "v0.1.2", want: "v0.1.2"},
+		{name: "development build", injected: "dev", module: "(devel)", want: "dev"},
+		{name: "empty metadata", want: "dev"},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			info := &debug.BuildInfo{Main: debug.Module{Version: tt.module}}
+			if got := resolveVersion(tt.injected, info); got != tt.want {
+				t.Fatalf("resolveVersion(%q, %q) = %q, want %q", tt.injected, tt.module, got, tt.want)
+			}
+		})
 	}
 }
 

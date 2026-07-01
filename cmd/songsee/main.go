@@ -12,6 +12,7 @@ import (
 	"math"
 	"os"
 	"path/filepath"
+	"runtime/debug"
 	"strings"
 
 	"github.com/alecthomas/kong"
@@ -59,7 +60,7 @@ func run(args []string, stdin io.Reader, stdout, stderr io.Writer) int {
 	parser, err := kong.New(&cfg,
 		kong.Name("songsee"),
 		kong.Description("generate spectral visualizations"),
-		kong.Vars{"version": version, "styles": render.PaletteHelp(), "viz": viz.KindsHelp()},
+		kong.Vars{"version": buildVersion(), "styles": render.PaletteHelp(), "viz": viz.KindsHelp()},
 		kong.Writers(stdout, stderr),
 		kong.Exit(func(code int) { panic(exitPanic{code: code}) }),
 	)
@@ -230,6 +231,24 @@ func run(args []string, stdin io.Reader, stdout, stderr io.Writer) int {
 		_, _ = fmt.Fprintln(stdout, output)
 	}
 	return 0
+}
+
+func buildVersion() string {
+	info, _ := debug.ReadBuildInfo()
+	return resolveVersion(version, info)
+}
+
+func resolveVersion(injected string, info *debug.BuildInfo) string {
+	if injected != "" && injected != "dev" {
+		return injected
+	}
+	if info != nil && info.Main.Version != "" && info.Main.Version != "(devel)" {
+		return info.Main.Version
+	}
+	if injected != "" {
+		return injected
+	}
+	return "dev"
 }
 
 type grid struct {
