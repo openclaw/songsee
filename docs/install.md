@@ -52,7 +52,7 @@ Override the lookup with `--ffmpeg /custom/path/ffmpeg` when you have several bu
 ```bash
 songsee --version
 songsee --help
-songsee testdata/short.wav   # render a tiny known-good file
+songsee testdata/sine.mp3    # render a tiny known-good file
 ```
 
 ## Updating
