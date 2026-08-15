@@ -8,6 +8,8 @@
 - CLI: list the `claw` palette in `--help` and reject invalid `--style`/`--viz` values before decoding input.
 - Palettes: rename `clawd` to `claw`; the old name remains accepted as a compatibility alias.
 - Rendering: reduce per-pixel overhead in heatmap, spectrogram, and curve drawing.
+- Decoding: give the ffmpeg fallback a 30-second deadline so a hung decoder cannot stall songsee.
+- Decoding: reject WAV RIFF chunks that claim more than 1 GiB (fmt chunks: 1 KiB) before allocating.
 
 ## 0.1.1 - 2026-05-10
 

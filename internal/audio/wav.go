@@ -8,6 +8,13 @@ import (
 	"math"
 )
 
+// maxWavChunkSize is the largest RIFF chunk we will allocate. A crafted
+// uint32 chunk size would otherwise make([]byte, ~4GiB) and OOM.
+const maxWavChunkSize = 1 << 30 // 1 GiB
+
+// maxWavFmtChunkSize bounds the fmt chunk. WAVEFORMATEXTENSIBLE is 40 bytes.
+const maxWavFmtChunkSize = 1024
+
 // DecodeWAVIf tries to decode WAV data, returning ok=false when not WAV.
 func DecodeWAVIf(r io.ReadSeeker) (Audio, bool, error) {
 	header := make([]byte, 12)
@@ -52,7 +59,15 @@ func decodeWAV(r io.ReadSeeker) (Audio, error) {
 			return Audio{}, err
 		}
 		chunkID := string(chunkHeader[0:4])
-		chunkSize := int(binary.LittleEndian.Uint32(chunkHeader[4:8]))
+		chunkSizeU := binary.LittleEndian.Uint32(chunkHeader[4:8])
+		maxSize := uint32(maxWavChunkSize)
+		if chunkID == "fmt " {
+			maxSize = maxWavFmtChunkSize
+		}
+		if chunkSizeU > maxSize {
+			return Audio{}, fmt.Errorf("wav: %q chunk too large (%d bytes)", chunkID, chunkSizeU)
+		}
+		chunkSize := int(chunkSizeU)
 
 		switch chunkID {
 		case "fmt ":

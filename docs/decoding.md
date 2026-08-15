@@ -21,7 +21,7 @@ Pure-Go WAV decoder. Handles:
 - 32-bit float, 64-bit float
 - WAVE_FORMAT_EXTENSIBLE (with channel masks and sub-format GUIDs)
 
-No external dependency, no ffmpeg roundtrip. The decoder validates the RIFF header and rejects truncated `data` chunks before allocating sample buffers.
+No external dependency, no ffmpeg roundtrip. The decoder validates the RIFF header, rejects truncated `data` chunks before allocating sample buffers, and rejects RIFF chunks that claim more than 1 GiB (fmt chunks: 1 KiB) so a crafted header cannot force a huge allocation.
 
 ## Native MP3
 
@@ -42,6 +42,8 @@ Tweak the pipeline with:
 
 - `--sample-rate N` — output sample rate fed to ffmpeg (default `44100`).
 - `--ffmpeg /path/to/ffmpeg` — override the binary lookup.
+
+The ffmpeg process is given a 30-second deadline. A hung decoder is killed and reported as a timeout instead of stalling songsee.
 
 If ffmpeg isn't on `PATH` and the file isn't WAV or MP3, songsee fails with a clear error. Install with `brew install ffmpeg` or your distro's package manager.
 

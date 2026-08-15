@@ -2,6 +2,7 @@ package audio
 
 import (
 	"bytes"
+	"strings"
 	"testing"
 )
 
@@ -90,6 +91,55 @@ func TestDecodeWAVInvalidChannels(t *testing.T) {
 
 	if _, err := DecodeBytes(buf.Bytes(), Options{}); err == nil {
 		t.Fatalf("expected error for channels")
+	}
+}
+
+func TestDecodeWAVHugeDataChunkSize(t *testing.T) {
+	// Crafted header claims a 4GiB-1 data chunk. Unfixed code
+	// make([]byte, chunkSize) from the raw uint32 may OOM or panic.
+	buf := &bytes.Buffer{}
+	buf.WriteString("RIFF")
+	writeU32(buf, 4+(8+16)+(8+4))
+	buf.WriteString("WAVE")
+
+	buf.WriteString("fmt ")
+	writeU32(buf, 16)
+	writeU16(buf, 1)
+	writeU16(buf, 1)
+	writeU32(buf, 44100)
+	writeU32(buf, 44100*2)
+	writeU16(buf, 2)
+	writeU16(buf, 16)
+
+	buf.WriteString("data")
+	writeU32(buf, 0xffffffff)
+	buf.Write([]byte{0, 0, 0, 0})
+
+	_, err := decodeWAV(bytes.NewReader(buf.Bytes()))
+	if err == nil {
+		t.Fatal("expected error for huge data chunkSize")
+	}
+	if !strings.Contains(err.Error(), "too large") {
+		t.Fatalf("want fail-closed too-large error, got %v", err)
+	}
+}
+
+func TestDecodeWAVHugeFmtChunkSize(t *testing.T) {
+	buf := &bytes.Buffer{}
+	buf.WriteString("RIFF")
+	writeU32(buf, 4+8)
+	buf.WriteString("WAVE")
+
+	buf.WriteString("fmt ")
+	writeU32(buf, 0xffffffff)
+	buf.Write([]byte{0, 0, 0, 0})
+
+	_, err := decodeWAV(bytes.NewReader(buf.Bytes()))
+	if err == nil {
+		t.Fatal("expected error for huge fmt chunkSize")
+	}
+	if !strings.Contains(err.Error(), "too large") {
+		t.Fatalf("want fail-closed too-large error, got %v", err)
 	}
 }
 

@@ -4,7 +4,9 @@ import (
 	"bytes"
 	"os"
 	"path/filepath"
+	"strings"
 	"testing"
+	"time"
 )
 
 func TestResolveFFmpeg(t *testing.T) {
@@ -74,11 +76,48 @@ func TestDecodeWithFFmpegBadPath(t *testing.T) {
 	}
 }
 
+func TestDecodeWithFFmpegTimeout(t *testing.T) {
+	prev := ffmpegTimeout
+	ffmpegTimeout = 200 * time.Millisecond
+	t.Cleanup(func() { ffmpegTimeout = prev })
+
+	ffmpegPath := installHangingFFmpeg(t)
+	input := filepath.Join(t.TempDir(), "input.bin")
+	if err := os.WriteFile(input, []byte("audio"), 0o644); err != nil {
+		t.Fatalf("WriteFile: %v", err)
+	}
+
+	start := time.Now()
+	_, err := DecodeWithFFmpeg(input, nil, 44100, ffmpegPath)
+	elapsed := time.Since(start)
+	if err == nil {
+		t.Fatal("expected timeout error")
+	}
+	if elapsed > 3*time.Second {
+		t.Fatalf("timeout took too long: %v", elapsed)
+	}
+	msg := strings.ToLower(err.Error())
+	if !strings.Contains(msg, "timed out") && !strings.Contains(msg, "deadline") {
+		t.Fatalf("want timeout/deadline error, got %v", err)
+	}
+}
+
 func installFakeFFmpeg(t *testing.T) string {
 	t.Helper()
 	dir := t.TempDir()
 	path := filepath.Join(dir, "ffmpeg")
 	script := "#!/bin/sh\nprintf '\\x00\\x00\\x00\\x00\\x00\\x00\\x00\\x3f'\n"
+	if err := os.WriteFile(path, []byte(script), 0o755); err != nil {
+		t.Fatalf("WriteFile: %v", err)
+	}
+	return path
+}
+
+func installHangingFFmpeg(t *testing.T) string {
+	t.Helper()
+	dir := t.TempDir()
+	path := filepath.Join(dir, "ffmpeg")
+	script := "#!/bin/sh\nexec /bin/sleep 60\n"
 	if err := os.WriteFile(path, []byte(script), 0o755); err != nil {
 		t.Fatalf("WriteFile: %v", err)
 	}

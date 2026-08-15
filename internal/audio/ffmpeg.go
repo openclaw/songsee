@@ -3,12 +3,17 @@ package audio
 
 import (
 	"bytes"
+	"context"
 	"encoding/binary"
 	"fmt"
 	"io"
 	"math"
 	"os/exec"
+	"time"
 )
+
+// ffmpegTimeout bounds DecodeWithFFmpeg so a hung decoder cannot stall songsee.
+var ffmpegTimeout = 30 * time.Second
 
 // DecodeWithFFmpeg uses ffmpeg to decode any input into mono float samples.
 func DecodeWithFFmpeg(path string, stdin io.Reader, sampleRate int, ffmpegPath string) (Audio, error) {
@@ -28,7 +33,9 @@ func DecodeWithFFmpeg(path string, stdin io.Reader, sampleRate int, ffmpegPath s
 	}
 	args = append(args, "-f", "f32le", "-ac", "1", "-ar", fmt.Sprintf("%d", sampleRate), "-")
 
-	cmd := exec.Command(ffmpeg, args...)
+	ctx, cancel := context.WithTimeout(context.Background(), ffmpegTimeout)
+	defer cancel()
+	cmd := exec.CommandContext(ctx, ffmpeg, args...)
 	if stdin != nil {
 		cmd.Stdin = stdin
 	}
@@ -36,6 +43,9 @@ func DecodeWithFFmpeg(path string, stdin io.Reader, sampleRate int, ffmpegPath s
 	cmd.Stderr = &stderr
 	out, err := cmd.Output()
 	if err != nil {
+		if ctx.Err() != nil {
+			return Audio{}, fmt.Errorf("ffmpeg: timed out after %s: %w", ffmpegTimeout, ctx.Err())
+		}
 		if stderr.Len() > 0 {
 			return Audio{}, fmt.Errorf("ffmpeg: %v: %s", err, stderr.String())
 		}
