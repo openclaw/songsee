@@ -14,6 +14,7 @@ import (
 	"path/filepath"
 	"runtime/debug"
 	"strings"
+	"time"
 
 	"github.com/alecthomas/kong"
 	"github.com/steipete/songsee/internal/audio"
@@ -24,24 +25,25 @@ import (
 var version = "dev"
 
 type cli struct {
-	Input      string           `arg:"" help:"file path or '-' for stdin"`
-	Output     string           `short:"o" help:"output image path"`
-	Format     string           `help:"output format: jpg or png" default:"jpg"`
-	Width      int              `help:"output width in pixels" default:"1920"`
-	Height     int              `help:"output height in pixels" default:"1080"`
-	WindowSize int              `name:"window" help:"FFT window size in samples" default:"2048"`
-	HopSize    int              `name:"hop" help:"hop size in samples" default:"512"`
-	MinFreq    float64          `name:"min-freq" help:"minimum frequency in Hz"`
-	MaxFreq    float64          `name:"max-freq" help:"maximum frequency in Hz (0 = Nyquist)"`
-	StartSec   float64          `name:"start" help:"start time in seconds"`
-	Duration   float64          `name:"duration" help:"duration in seconds (0 = full)"`
-	SampleRate int              `name:"sample-rate" help:"ffmpeg output sample rate" default:"44100"`
-	Style      string           `help:"palette style: ${styles}" default:"classic"`
-	Viz        []string         `name:"viz" help:"visualizations (repeatable or comma-separated): ${viz}"`
-	FFmpegPath string           `name:"ffmpeg" help:"path to ffmpeg binary"`
-	Quiet      bool             `short:"q" help:"suppress stdout output"`
-	Verbose    bool             `short:"v" help:"verbose stderr output"`
-	Version    kong.VersionFlag `name:"version" help:"print version"`
+	Input         string           `arg:"" help:"file path or '-' for stdin"`
+	Output        string           `short:"o" help:"output image path"`
+	Format        string           `help:"output format: jpg or png" default:"jpg"`
+	Width         int              `help:"output width in pixels" default:"1920"`
+	Height        int              `help:"output height in pixels" default:"1080"`
+	WindowSize    int              `name:"window" help:"FFT window size in samples" default:"2048"`
+	HopSize       int              `name:"hop" help:"hop size in samples" default:"512"`
+	MinFreq       float64          `name:"min-freq" help:"minimum frequency in Hz"`
+	MaxFreq       float64          `name:"max-freq" help:"maximum frequency in Hz (0 = Nyquist)"`
+	StartSec      float64          `name:"start" help:"start time in seconds"`
+	Duration      float64          `name:"duration" help:"duration in seconds (0 = full)"`
+	SampleRate    int              `name:"sample-rate" help:"ffmpeg output sample rate" default:"44100"`
+	Style         string           `help:"palette style: ${styles}" default:"classic"`
+	Viz           []string         `name:"viz" help:"visualizations (repeatable or comma-separated): ${viz}"`
+	FFmpegPath    string           `name:"ffmpeg" help:"path to ffmpeg binary"`
+	FFmpegTimeout time.Duration    `name:"ffmpeg-timeout" help:"optional ffmpeg fallback deadline (0 = none)" default:"0s"`
+	Quiet         bool             `short:"q" help:"suppress stdout output"`
+	Verbose       bool             `short:"v" help:"verbose stderr output"`
+	Version       kong.VersionFlag `name:"version" help:"print version"`
 }
 
 type exitPanic struct {
@@ -170,7 +172,11 @@ func run(args []string, stdin io.Reader, stdout, stderr io.Writer) int {
 		_, _ = fmt.Fprintf(stderr, "output: %s (%s)\n", output, format)
 	}
 
-	opts := audio.Options{SampleRate: cfg.SampleRate, FFmpegPath: cfg.FFmpegPath}
+	opts := audio.Options{
+		SampleRate:    cfg.SampleRate,
+		FFmpegPath:    cfg.FFmpegPath,
+		FFmpegTimeout: cfg.FFmpegTimeout,
+	}
 	var pcm audio.Audio
 	if input == "-" {
 		pcm, err = audio.DecodeReader(stdin, opts)

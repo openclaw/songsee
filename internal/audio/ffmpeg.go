@@ -12,12 +12,9 @@ import (
 	"time"
 )
 
-// ffmpegTimeout bounds DecodeWithFFmpeg when greater than zero.
-// The default is 0 (no deadline) so existing slow decodes keep working.
-var ffmpegTimeout time.Duration
-
 // DecodeWithFFmpeg uses ffmpeg to decode any input into mono float samples.
-func DecodeWithFFmpeg(path string, stdin io.Reader, sampleRate int, ffmpegPath string) (Audio, error) {
+// timeout 0 means no deadline (same as prior releases).
+func DecodeWithFFmpeg(path string, stdin io.Reader, sampleRate int, ffmpegPath string, timeout time.Duration) (Audio, error) {
 	if sampleRate <= 0 {
 		sampleRate = 44100
 	}
@@ -36,8 +33,8 @@ func DecodeWithFFmpeg(path string, stdin io.Reader, sampleRate int, ffmpegPath s
 
 	ctx := context.Background()
 	cancel := func() {}
-	if ffmpegTimeout > 0 {
-		ctx, cancel = context.WithTimeout(context.Background(), ffmpegTimeout)
+	if timeout > 0 {
+		ctx, cancel = context.WithTimeout(context.Background(), timeout)
 	}
 	defer cancel()
 	cmd := exec.CommandContext(ctx, ffmpeg, args...)
@@ -48,8 +45,8 @@ func DecodeWithFFmpeg(path string, stdin io.Reader, sampleRate int, ffmpegPath s
 	cmd.Stderr = &stderr
 	out, err := cmd.Output()
 	if err != nil {
-		if ffmpegTimeout > 0 && ctx.Err() != nil {
-			return Audio{}, fmt.Errorf("ffmpeg: timed out after %s: %w", ffmpegTimeout, ctx.Err())
+		if timeout > 0 && ctx.Err() != nil {
+			return Audio{}, fmt.Errorf("ffmpeg: timed out after %s: %w", timeout, ctx.Err())
 		}
 		if stderr.Len() > 0 {
 			return Audio{}, fmt.Errorf("ffmpeg: %v: %s", err, stderr.String())

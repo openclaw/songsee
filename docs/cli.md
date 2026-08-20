@@ -53,6 +53,7 @@ songsee <input> [flags]
 |------|------|---------|-------------|
 | `--sample-rate` | int | `44100` | Sample rate requested from the ffmpeg fallback. Native WAV/MP3 keep the file's rate. |
 | `--ffmpeg` | string | first `ffmpeg` on `PATH` | Override the ffmpeg binary used for non-WAV/MP3 inputs. |
+| `--ffmpeg-timeout` | duration | `0s` | Optional deadline for the ffmpeg fallback. `0s` means no deadline. |
 
 ## Exit codes
 

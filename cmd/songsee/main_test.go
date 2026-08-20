@@ -8,7 +8,9 @@ import (
 	"os"
 	"path/filepath"
 	"runtime/debug"
+	"strings"
 	"testing"
+	"time"
 )
 
 func TestRunMP3E2E(t *testing.T) {
@@ -132,6 +134,9 @@ func TestRunHelp(t *testing.T) {
 	}
 	if bytes.Contains(stdout.Bytes(), []byte("clawd")) {
 		t.Fatalf("expected palette help to hide legacy clawd alias")
+	}
+	if !bytes.Contains(stdout.Bytes(), []byte("ffmpeg-timeout")) {
+		t.Fatalf("expected help to list ffmpeg-timeout")
 	}
 }
 
@@ -597,6 +602,38 @@ func TestRunOutputJpgExt(t *testing.T) {
 	}
 	if _, err := os.Stat(output); err != nil {
 		t.Fatalf("missing output: %v", err)
+	}
+}
+
+func TestRunFFmpegTimeoutFlag(t *testing.T) {
+	dir := t.TempDir()
+	ffmpeg := filepath.Join(dir, "ffmpeg")
+	if err := os.WriteFile(ffmpeg, []byte("#!/bin/sh\nexec /bin/sleep 60\n"), 0o755); err != nil {
+		t.Fatalf("write ffmpeg: %v", err)
+	}
+	input := filepath.Join(dir, "input.opus")
+	if err := os.WriteFile(input, []byte("not-wav-or-mp3"), 0o644); err != nil {
+		t.Fatalf("write input: %v", err)
+	}
+	stdout := &bytes.Buffer{}
+	stderr := &bytes.Buffer{}
+	start := time.Now()
+	exit := run([]string{
+		"--ffmpeg", ffmpeg,
+		"--ffmpeg-timeout", "200ms",
+		"--output", filepath.Join(dir, "out.jpg"),
+		input,
+	}, bytes.NewReader(nil), stdout, stderr)
+	elapsed := time.Since(start)
+	if exit != 1 {
+		t.Fatalf("expected error exit, got %d stderr=%s", exit, stderr.String())
+	}
+	if elapsed > 3*time.Second {
+		t.Fatalf("timeout took too long: %v", elapsed)
+	}
+	if !strings.Contains(strings.ToLower(stderr.String()), "timed out") &&
+		!strings.Contains(strings.ToLower(stderr.String()), "deadline") {
+		t.Fatalf("want timeout error on stderr, got %q", stderr.String())
 	}
 }
 

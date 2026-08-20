@@ -46,7 +46,7 @@ func TestDecodeWithFFmpegFile(t *testing.T) {
 	if err := os.WriteFile(input, []byte("audio"), 0o644); err != nil {
 		t.Fatalf("WriteFile: %v", err)
 	}
-	pcm, err := DecodeWithFFmpeg(input, nil, 22050, ffmpegPath)
+	pcm, err := DecodeWithFFmpeg(input, nil, 22050, ffmpegPath, 0)
 	if err != nil {
 		t.Fatalf("DecodeWithFFmpeg: %v", err)
 	}
@@ -60,7 +60,7 @@ func TestDecodeWithFFmpegFile(t *testing.T) {
 
 func TestDecodeWithFFmpegStdin(t *testing.T) {
 	ffmpegPath := installFakeFFmpeg(t)
-	pcm, err := DecodeWithFFmpeg("", bytes.NewReader([]byte("audio")), 44100, ffmpegPath)
+	pcm, err := DecodeWithFFmpeg("", bytes.NewReader([]byte("audio")), 44100, ffmpegPath, 0)
 	if err != nil {
 		t.Fatalf("DecodeWithFFmpeg stdin: %v", err)
 	}
@@ -70,23 +70,38 @@ func TestDecodeWithFFmpegStdin(t *testing.T) {
 }
 
 func TestDecodeWithFFmpegBadPath(t *testing.T) {
-	_, err := DecodeWithFFmpeg("missing.mp3", nil, 0, "/no/such/ffmpeg")
+	_, err := DecodeWithFFmpeg("missing.mp3", nil, 0, "/no/such/ffmpeg", 0)
 	if err == nil {
 		t.Fatalf("expected error")
 	}
 }
 
-func TestFFmpegTimeoutDefaultUnlimited(t *testing.T) {
-	if ffmpegTimeout != 0 {
-		t.Fatalf("default ffmpegTimeout = %v, want 0 (unlimited)", ffmpegTimeout)
+func TestDecodeFileHonorsOptionsFFmpegTimeout(t *testing.T) {
+	ffmpegPath := installHangingFFmpeg(t)
+	input := filepath.Join(t.TempDir(), "input.opus")
+	if err := os.WriteFile(input, []byte("not-wav-or-mp3"), 0o644); err != nil {
+		t.Fatalf("WriteFile: %v", err)
+	}
+
+	start := time.Now()
+	_, err := DecodeFile(input, Options{
+		FFmpegPath:    ffmpegPath,
+		FFmpegTimeout: 200 * time.Millisecond,
+	})
+	elapsed := time.Since(start)
+	if err == nil {
+		t.Fatal("expected timeout error")
+	}
+	if elapsed > 3*time.Second {
+		t.Fatalf("timeout took too long: %v", elapsed)
+	}
+	msg := strings.ToLower(err.Error())
+	if !strings.Contains(msg, "timed out") && !strings.Contains(msg, "deadline") {
+		t.Fatalf("want timeout/deadline error, got %v", err)
 	}
 }
 
 func TestDecodeWithFFmpegTimeout(t *testing.T) {
-	prev := ffmpegTimeout
-	ffmpegTimeout = 200 * time.Millisecond
-	t.Cleanup(func() { ffmpegTimeout = prev })
-
 	ffmpegPath := installHangingFFmpeg(t)
 	input := filepath.Join(t.TempDir(), "input.bin")
 	if err := os.WriteFile(input, []byte("audio"), 0o644); err != nil {
@@ -94,7 +109,7 @@ func TestDecodeWithFFmpegTimeout(t *testing.T) {
 	}
 
 	start := time.Now()
-	_, err := DecodeWithFFmpeg(input, nil, 44100, ffmpegPath)
+	_, err := DecodeWithFFmpeg(input, nil, 44100, ffmpegPath, 200*time.Millisecond)
 	elapsed := time.Since(start)
 	if err == nil {
 		t.Fatal("expected timeout error")

@@ -42,8 +42,9 @@ Tweak the pipeline with:
 
 - `--sample-rate N` — output sample rate fed to ffmpeg (default `44100`).
 - `--ffmpeg /path/to/ffmpeg` — override the binary lookup.
+- `--ffmpeg-timeout DURATION` — optional ffmpeg deadline (Go duration, default `0s` = none).
 
-ffmpeg has no deadline by default, matching prior releases. Tests and callers can set `ffmpegTimeout` when they need a hang bound.
+ffmpeg has no deadline by default, matching prior releases. Set `--ffmpeg-timeout 30s` (or `Options.FFmpegTimeout`) when a hung fallback should fail instead of blocking.
 
 If ffmpeg isn't on `PATH` and the file isn't WAV or MP3, songsee fails with a clear error. Install with `brew install ffmpeg` or your distro's package manager.
 
