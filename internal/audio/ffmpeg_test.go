@@ -76,6 +76,12 @@ func TestDecodeWithFFmpegBadPath(t *testing.T) {
 	}
 }
 
+func TestFFmpegTimeoutDefaultUnlimited(t *testing.T) {
+	if ffmpegTimeout != 0 {
+		t.Fatalf("default ffmpegTimeout = %v, want 0 (unlimited)", ffmpegTimeout)
+	}
+}
+
 func TestDecodeWithFFmpegTimeout(t *testing.T) {
 	prev := ffmpegTimeout
 	ffmpegTimeout = 200 * time.Millisecond

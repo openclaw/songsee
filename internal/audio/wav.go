@@ -94,7 +94,7 @@ func decodeWAV(r io.ReadSeeker) (Audio, error) {
 				}
 			}
 		case "data":
-			if chunkSizeU > maxWavDataBytes || uint64(chunkSizeU) > uint64(maxDecodedSamples) {
+			if chunkSizeU > maxWavDataBytes {
 				return Audio{}, fmt.Errorf("wav: %q chunk too large (%d bytes)", chunkID, chunkSizeU)
 			}
 			dataFound = true
@@ -103,9 +103,6 @@ func decodeWAV(r io.ReadSeeker) (Audio, error) {
 				return Audio{}, err
 			}
 		default:
-			if chunkSizeU > maxWavDataBytes {
-				return Audio{}, fmt.Errorf("wav: %q chunk too large (%d bytes)", chunkID, chunkSizeU)
-			}
 			if _, err := r.Seek(int64(chunkSize), io.SeekCurrent); err != nil {
 				return Audio{}, err
 			}

@@ -204,6 +204,59 @@ func TestDecodeWAVOneGiBDataHeaderRejected(t *testing.T) {
 	}
 }
 
+func TestDecodeWAV16BitOver8MiBNotSampleCap(t *testing.T) {
+	// 9 MiB of 16-bit mono is 4.5M samples, under maxDecodedSamples.
+	// Comparing the byte count to the sample cap used to reject this.
+	payload := []byte{0, 0}
+	buf := &bytes.Buffer{}
+	buf.WriteString("RIFF")
+	writeU32(buf, uint32(4+(8+16)+(8+len(payload))))
+	buf.WriteString("WAVE")
+	buf.WriteString("fmt ")
+	writeU32(buf, 16)
+	writeU16(buf, 1)
+	writeU16(buf, 1)
+	writeU32(buf, 44100)
+	writeU32(buf, 44100*2)
+	writeU16(buf, 2)
+	writeU16(buf, 16)
+	buf.WriteString("data")
+	writeU32(buf, 9<<20)
+	buf.Write(payload)
+
+	_, err := decodeWAV(bytes.NewReader(buf.Bytes()))
+	if err != nil && strings.Contains(err.Error(), "too large") {
+		t.Fatalf("byte count compared to sample cap: %v", err)
+	}
+}
+
+func TestDecodeWAVLargeUnknownChunkNotCapped(t *testing.T) {
+	payload := []byte{0, 0, 0, 0}
+	buf := &bytes.Buffer{}
+	buf.WriteString("RIFF")
+	writeU32(buf, uint32(4+(8+16)+(8+4)+(8+len(payload))))
+	buf.WriteString("WAVE")
+	buf.WriteString("fmt ")
+	writeU32(buf, 16)
+	writeU16(buf, 1)
+	writeU16(buf, 1)
+	writeU32(buf, 44100)
+	writeU32(buf, 44100*2)
+	writeU16(buf, 2)
+	writeU16(buf, 16)
+	buf.WriteString("JUNK")
+	writeU32(buf, 40<<20)
+	buf.Write([]byte{1, 2, 3, 4})
+	buf.WriteString("data")
+	writeU32(buf, uint32(len(payload)))
+	buf.Write(payload)
+
+	_, err := decodeWAV(bytes.NewReader(buf.Bytes()))
+	if err != nil && strings.Contains(err.Error(), "too large") {
+		t.Fatalf("seek-only unknown chunk was size-capped: %v", err)
+	}
+}
+
 func TestDecodeWAVFloatUnsupportedBits(t *testing.T) {
 	buf := &bytes.Buffer{}
 	buf.WriteString("RIFF")
