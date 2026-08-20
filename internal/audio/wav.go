@@ -8,12 +8,18 @@ import (
 	"math"
 )
 
-// maxWavChunkSize is the largest RIFF chunk we will allocate. A crafted
-// uint32 chunk size would otherwise make([]byte, ~4GiB) and OOM.
-const maxWavChunkSize = 1 << 30 // 1 GiB
+// maxWavDataBytes is the largest data chunk we allocate. A 1 GiB raw
+// payload can still expand into several GiB of float64 samples.
+const maxWavDataBytes = 32 << 20 // 32 MiB
 
-// maxWavFmtChunkSize bounds the fmt chunk. WAVEFORMATEXTENSIBLE is 40 bytes.
-const maxWavFmtChunkSize = 1024
+// maxDecodedSamples caps the float64 output (8 bytes each).
+const maxDecodedSamples = 8 << 20 // 8M samples, 64 MiB
+
+// maxFmtPrefix is enough for WAVEFORMATEXTENSIBLE. Extra fmt bytes are skipped.
+const maxFmtPrefix = 40
+
+// maxFmtSkip rejects a fmt chunk so large it is a DoS, not a real header.
+const maxFmtSkip = 1 << 20 // 1 MiB
 
 // DecodeWAVIf tries to decode WAV data, returning ok=false when not WAV.
 func DecodeWAVIf(r io.ReadSeeker) (Audio, bool, error) {
@@ -60,33 +66,46 @@ func decodeWAV(r io.ReadSeeker) (Audio, error) {
 		}
 		chunkID := string(chunkHeader[0:4])
 		chunkSizeU := binary.LittleEndian.Uint32(chunkHeader[4:8])
-		maxSize := uint32(maxWavChunkSize)
-		if chunkID == "fmt " {
-			maxSize = maxWavFmtChunkSize
-		}
-		if chunkSizeU > maxSize {
-			return Audio{}, fmt.Errorf("wav: %q chunk too large (%d bytes)", chunkID, chunkSizeU)
-		}
 		chunkSize := int(chunkSizeU)
 
 		switch chunkID {
 		case "fmt ":
+			if chunkSizeU < 16 {
+				return Audio{}, errors.New("wav: short fmt chunk")
+			}
+			if chunkSizeU > maxFmtSkip {
+				return Audio{}, fmt.Errorf("wav: %q chunk too large (%d bytes)", chunkID, chunkSizeU)
+			}
 			fmtFound = true
-			buf := make([]byte, chunkSize)
+			prefix := chunkSize
+			if prefix > maxFmtPrefix {
+				prefix = maxFmtPrefix
+			}
+			buf := make([]byte, prefix)
 			if _, err := io.ReadFull(r, buf); err != nil {
 				return Audio{}, err
 			}
 			if err := parseWavFormat(buf, &fmtChunk); err != nil {
 				return Audio{}, err
 			}
+			if rem := chunkSize - prefix; rem > 0 {
+				if _, err := r.Seek(int64(rem), io.SeekCurrent); err != nil {
+					return Audio{}, err
+				}
+			}
 		case "data":
+			if chunkSizeU > maxWavDataBytes || uint64(chunkSizeU) > uint64(maxDecodedSamples) {
+				return Audio{}, fmt.Errorf("wav: %q chunk too large (%d bytes)", chunkID, chunkSizeU)
+			}
 			dataFound = true
 			data = make([]byte, chunkSize)
 			if _, err := io.ReadFull(r, data); err != nil {
 				return Audio{}, err
 			}
 		default:
-			// Skip unknown chunk.
+			if chunkSizeU > maxWavDataBytes {
+				return Audio{}, fmt.Errorf("wav: %q chunk too large (%d bytes)", chunkID, chunkSizeU)
+			}
 			if _, err := r.Seek(int64(chunkSize), io.SeekCurrent); err != nil {
 				return Audio{}, err
 			}
@@ -153,6 +172,14 @@ func decodeWavData(fmtChunk wavFormat, data []byte) (Audio, error) {
 	bits := int(fmtChunk.BitsPerSample)
 	if bits == 0 {
 		return Audio{}, errors.New("wav: invalid bits per sample")
+	}
+	bytesPerSample := bits / 8
+	if bytesPerSample < 1 {
+		return Audio{}, fmt.Errorf("wav: unsupported bit depth %d", bits)
+	}
+	frameSize := bytesPerSample * channels
+	if frames := len(data) / frameSize; frames > maxDecodedSamples {
+		return Audio{}, fmt.Errorf("wav: too many samples (%d)", frames)
 	}
 
 	var samples []float64

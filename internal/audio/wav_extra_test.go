@@ -143,6 +143,67 @@ func TestDecodeWAVHugeFmtChunkSize(t *testing.T) {
 	}
 }
 
+func TestDecodeWAVExtendedFmtOver1KiB(t *testing.T) {
+	// Main accepts fmt payloads larger than WAVEFORMATEXTENSIBLE (40)
+	// and ignores the trailing bytes. A 1 KiB reject would break those.
+	payload := []byte{0, 0, 0, 0}
+	fmtSize := 2048
+	buf := &bytes.Buffer{}
+	buf.WriteString("RIFF")
+	writeU32(buf, uint32(4+(8+fmtSize)+(8+len(payload))))
+	buf.WriteString("WAVE")
+
+	buf.WriteString("fmt ")
+	writeU32(buf, uint32(fmtSize))
+	writeU16(buf, 1)
+	writeU16(buf, 1)
+	writeU32(buf, 44100)
+	writeU32(buf, 44100*2)
+	writeU16(buf, 2)
+	writeU16(buf, 16)
+	buf.Write(make([]byte, fmtSize-16))
+
+	buf.WriteString("data")
+	writeU32(buf, uint32(len(payload)))
+	buf.Write(payload)
+
+	pcm, err := DecodeBytes(buf.Bytes(), Options{})
+	if err != nil {
+		t.Fatalf("DecodeBytes: %v", err)
+	}
+	if len(pcm.Samples) == 0 {
+		t.Fatalf("empty samples")
+	}
+}
+
+func TestDecodeWAVOneGiBDataHeaderRejected(t *testing.T) {
+	buf := &bytes.Buffer{}
+	buf.WriteString("RIFF")
+	writeU32(buf, 4+(8+16)+(8+4))
+	buf.WriteString("WAVE")
+
+	buf.WriteString("fmt ")
+	writeU32(buf, 16)
+	writeU16(buf, 1)
+	writeU16(buf, 1)
+	writeU32(buf, 44100)
+	writeU32(buf, 44100*2)
+	writeU16(buf, 2)
+	writeU16(buf, 16)
+
+	buf.WriteString("data")
+	writeU32(buf, 1<<30)
+	buf.Write([]byte{0, 0, 0, 0})
+
+	_, err := decodeWAV(bytes.NewReader(buf.Bytes()))
+	if err == nil {
+		t.Fatal("expected error for 1GiB data header")
+	}
+	if !strings.Contains(err.Error(), "too large") {
+		t.Fatalf("want fail-closed too-large error, got %v", err)
+	}
+}
+
 func TestDecodeWAVFloatUnsupportedBits(t *testing.T) {
 	buf := &bytes.Buffer{}
 	buf.WriteString("RIFF")
