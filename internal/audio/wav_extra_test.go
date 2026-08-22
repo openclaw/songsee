@@ -119,8 +119,8 @@ func TestDecodeWAVHugeDataChunkSize(t *testing.T) {
 	if err == nil {
 		t.Fatal("expected error for huge data chunkSize")
 	}
-	if !strings.Contains(err.Error(), "too large") {
-		t.Fatalf("want fail-closed too-large error, got %v", err)
+	if !strings.Contains(err.Error(), "truncated") {
+		t.Fatalf("want truncated-header error, got %v", err)
 	}
 }
 
@@ -199,8 +199,37 @@ func TestDecodeWAVOneGiBDataHeaderRejected(t *testing.T) {
 	if err == nil {
 		t.Fatal("expected error for 1GiB data header")
 	}
-	if !strings.Contains(err.Error(), "too large") {
-		t.Fatalf("want fail-closed too-large error, got %v", err)
+	if !strings.Contains(err.Error(), "truncated") {
+		t.Fatalf("want truncated-header error, got %v", err)
+	}
+}
+
+func TestDecodeWAVValidDataAboveOld32MiBCap(t *testing.T) {
+	// 32 MiB + 4 bytes of 16-bit stereo is a valid native WAV that the
+	// old fixed ceilings rejected before --duration could slice it.
+	payload := make([]byte, (32<<20)+4)
+	buf := &bytes.Buffer{}
+	buf.WriteString("RIFF")
+	writeU32(buf, uint32(4+(8+16)+(8+len(payload))))
+	buf.WriteString("WAVE")
+	buf.WriteString("fmt ")
+	writeU32(buf, 16)
+	writeU16(buf, 1)
+	writeU16(buf, 2)
+	writeU32(buf, 44100)
+	writeU32(buf, 44100*4)
+	writeU16(buf, 4)
+	writeU16(buf, 16)
+	buf.WriteString("data")
+	writeU32(buf, uint32(len(payload)))
+	buf.Write(payload)
+
+	pcm, err := decodeWAV(bytes.NewReader(buf.Bytes()))
+	if err != nil {
+		t.Fatalf("valid native WAV above 32 MiB: %v", err)
+	}
+	if len(pcm.Samples) != len(payload)/4 {
+		t.Fatalf("samples=%d want %d", len(pcm.Samples), len(payload)/4)
 	}
 }
 
@@ -225,8 +254,11 @@ func TestDecodeWAV16BitOver8MiBNotSampleCap(t *testing.T) {
 	buf.Write(payload)
 
 	_, err := decodeWAV(bytes.NewReader(buf.Bytes()))
-	if err != nil && strings.Contains(err.Error(), "too large") {
-		t.Fatalf("byte count compared to sample cap: %v", err)
+	if err == nil {
+		t.Fatal("expected truncated data chunk")
+	}
+	if !strings.Contains(err.Error(), "truncated") {
+		t.Fatalf("want truncated-header error, got %v", err)
 	}
 }
 

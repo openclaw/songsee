@@ -21,7 +21,7 @@ Pure-Go WAV decoder. Handles:
 - 32-bit float, 64-bit float
 - WAVE_FORMAT_EXTENSIBLE (with channel masks and sub-format GUIDs)
 
-No external dependency, no ffmpeg roundtrip. The decoder validates the RIFF header, rejects truncated `data` chunks before allocating sample buffers, and rejects `data` chunks above 32 MiB or more than 8 million decoded samples. `fmt` reads a 40-byte prefix and skips the rest; only a `fmt` payload above 1 MiB is treated as a denial-of-service header. Unknown RIFF chunks are seeked, not allocated.
+No external dependency, no ffmpeg roundtrip. The decoder validates the RIFF header and rejects truncated or forged `data` chunks whose declared size exceeds the remaining file bytes, before allocating the sample buffer. Ordinary native WAV files have no fixed duration or payload ceiling. `fmt` reads a 40-byte prefix and skips the rest; only a `fmt` payload above 1 MiB is treated as a denial-of-service header. Unknown RIFF chunks are seeked, not allocated.
 
 ## Native MP3
 
@@ -42,7 +42,7 @@ Tweak the pipeline with:
 
 - `--sample-rate N` — output sample rate fed to ffmpeg (default `44100`).
 - `--ffmpeg /path/to/ffmpeg` — override the binary lookup.
-- `--ffmpeg-timeout DURATION` — optional ffmpeg deadline (Go duration, default `0s` = none).
+- `--ffmpeg-timeout DURATION` — optional ffmpeg deadline (Go duration, default `0s` = none). Negative values are rejected.
 
 ffmpeg has no deadline by default, matching prior releases. Set `--ffmpeg-timeout 30s` (or `Options.FFmpegTimeout`) when a hung fallback should fail instead of blocking.
 

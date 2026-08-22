@@ -15,6 +15,9 @@ import (
 // DecodeWithFFmpeg uses ffmpeg to decode any input into mono float samples.
 // timeout 0 means no deadline (same as prior releases).
 func DecodeWithFFmpeg(path string, stdin io.Reader, sampleRate int, ffmpegPath string, timeout time.Duration) (Audio, error) {
+	if timeout < 0 {
+		return Audio{}, fmt.Errorf("ffmpeg timeout must be >= 0 (got %s)", timeout)
+	}
 	if sampleRate <= 0 {
 		sampleRate = 44100
 	}

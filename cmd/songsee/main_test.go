@@ -605,6 +605,19 @@ func TestRunOutputJpgExt(t *testing.T) {
 	}
 }
 
+func TestRunRejectsNegativeFFmpegTimeout(t *testing.T) {
+	wav := makeWAV([]int16{0, 1, -1, 0}, 44100, 1)
+	stdout := &bytes.Buffer{}
+	stderr := &bytes.Buffer{}
+	exit := run([]string{"--ffmpeg-timeout=-1s", "-"}, bytes.NewReader(wav), stdout, stderr)
+	if exit != 2 {
+		t.Fatalf("expected usage exit, got %d stderr=%s", exit, stderr.String())
+	}
+	if !strings.Contains(stderr.String(), "--ffmpeg-timeout must be >= 0") {
+		t.Fatalf("want timeout validation error, got %q", stderr.String())
+	}
+}
+
 func TestRunFFmpegTimeoutFlag(t *testing.T) {
 	dir := t.TempDir()
 	ffmpeg := filepath.Join(dir, "ffmpeg")

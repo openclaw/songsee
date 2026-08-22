@@ -101,6 +101,16 @@ func TestDecodeFileHonorsOptionsFFmpegTimeout(t *testing.T) {
 	}
 }
 
+func TestDecodeWithFFmpegRejectsNegativeTimeout(t *testing.T) {
+	_, err := DecodeWithFFmpeg("input.bin", nil, 44100, "/bin/true", -time.Second)
+	if err == nil {
+		t.Fatal("expected error for negative timeout")
+	}
+	if !strings.Contains(err.Error(), "timeout") {
+		t.Fatalf("want timeout validation error, got %v", err)
+	}
+}
+
 func TestDecodeWithFFmpegTimeout(t *testing.T) {
 	ffmpegPath := installHangingFFmpeg(t)
 	input := filepath.Join(t.TempDir(), "input.bin")

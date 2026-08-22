@@ -124,6 +124,9 @@ func run(args []string, stdin io.Reader, stdout, stderr io.Writer) int {
 	if cfg.StartSec < 0 || cfg.Duration < 0 {
 		return dieUsage(stderr, ctx, "--start and --duration must be >= 0")
 	}
+	if cfg.FFmpegTimeout < 0 {
+		return dieUsage(stderr, ctx, "--ffmpeg-timeout must be >= 0")
+	}
 
 	format := strings.ToLower(cfg.Format)
 	if format != "jpg" && format != "jpeg" && format != "png" {
