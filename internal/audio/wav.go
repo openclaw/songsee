@@ -11,9 +11,6 @@ import (
 // maxFmtPrefix is enough for WAVEFORMATEXTENSIBLE. Extra fmt bytes are skipped.
 const maxFmtPrefix = 40
 
-// maxFmtSkip rejects a fmt chunk so large it is a DoS, not a real header.
-const maxFmtSkip = 1 << 20 // 1 MiB
-
 func remainingBytes(r io.ReadSeeker) (int64, error) {
 	cur, err := r.Seek(0, io.SeekCurrent)
 	if err != nil {
@@ -83,9 +80,6 @@ func decodeWAV(r io.ReadSeeker) (Audio, error) {
 		case "fmt ":
 			if chunkSizeU < 16 {
 				return Audio{}, errors.New("wav: short fmt chunk")
-			}
-			if chunkSizeU > maxFmtSkip {
-				return Audio{}, fmt.Errorf("wav: %q chunk too large (%d bytes)", chunkID, chunkSizeU)
 			}
 			fmtFound = true
 			prefix := chunkSize

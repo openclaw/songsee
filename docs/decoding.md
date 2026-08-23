@@ -21,7 +21,7 @@ Pure-Go WAV decoder. Handles:
 - 32-bit float, 64-bit float
 - WAVE_FORMAT_EXTENSIBLE (with channel masks and sub-format GUIDs)
 
-No external dependency, no ffmpeg roundtrip. The decoder validates the RIFF header and rejects truncated or forged `data` chunks whose declared size exceeds the remaining file bytes, before allocating the sample buffer. Ordinary native WAV files have no fixed duration or payload ceiling. `fmt` reads a 40-byte prefix and skips the rest; only a `fmt` payload above 1 MiB is treated as a denial-of-service header. Unknown RIFF chunks are seeked, not allocated.
+No external dependency, no ffmpeg roundtrip. The decoder validates the RIFF header and rejects truncated or forged `data` chunks whose declared size exceeds the remaining file bytes, before allocating the sample buffer. Ordinary native WAV files have no fixed duration or payload ceiling. `fmt` reads a 40-byte prefix and seeks the rest of the declared payload. Unknown RIFF chunks are seeked, not allocated.
 
 ## Native MP3
 

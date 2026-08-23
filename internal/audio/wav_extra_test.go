@@ -138,8 +138,39 @@ func TestDecodeWAVHugeFmtChunkSize(t *testing.T) {
 	if err == nil {
 		t.Fatal("expected error for huge fmt chunkSize")
 	}
-	if !strings.Contains(err.Error(), "too large") {
-		t.Fatalf("want fail-closed too-large error, got %v", err)
+}
+
+func TestDecodeWAVExtendedFmtOver1MiB(t *testing.T) {
+	// Current main reads the full declared fmt payload. A 1 MiB
+	// ceiling would reject a complete file the prefix-and-seek path
+	// can already skip without allocating the tail.
+	payload := []byte{0, 0, 0, 0}
+	fmtSize := (1 << 20) + 16
+	buf := &bytes.Buffer{}
+	buf.WriteString("RIFF")
+	writeU32(buf, uint32(4+(8+fmtSize)+(8+len(payload))))
+	buf.WriteString("WAVE")
+
+	buf.WriteString("fmt ")
+	writeU32(buf, uint32(fmtSize))
+	writeU16(buf, 1)
+	writeU16(buf, 1)
+	writeU32(buf, 44100)
+	writeU32(buf, 44100*2)
+	writeU16(buf, 2)
+	writeU16(buf, 16)
+	buf.Write(make([]byte, fmtSize-16))
+
+	buf.WriteString("data")
+	writeU32(buf, uint32(len(payload)))
+	buf.Write(payload)
+
+	pcm, err := DecodeBytes(buf.Bytes(), Options{})
+	if err != nil {
+		t.Fatalf("DecodeBytes: %v", err)
+	}
+	if len(pcm.Samples) == 0 {
+		t.Fatalf("empty samples")
 	}
 }
 
