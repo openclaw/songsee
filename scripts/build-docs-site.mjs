@@ -63,8 +63,8 @@ for (const section of nav) for (const page of section.pages) sectionByRel.set(pa
 const orderedPages = nav.flatMap((s) => s.pages);
 
 for (const page of pages) {
-  const html = markdownToHtml(page.markdown, page.rel);
-  const toc = tocFromHtml(html);
+  const { html, headings } = markdownToHtml(page.markdown, page.rel);
+  const toc = tocFromHeadings(headings);
   const idx = orderedPages.findIndex((p) => p.rel === page.rel);
   const prev = idx > 0 ? orderedPages[idx - 1] : null;
   const next = idx >= 0 && idx < orderedPages.length - 1 ? orderedPages[idx + 1] : null;
@@ -223,6 +223,7 @@ function titleize(input) {
 function markdownToHtml(markdown, currentRel) {
   const lines = markdown.replace(/\r\n/g, "\n").split("\n");
   const html = [];
+  const headings = [];
   let paragraph = [];
   let list = null;
   let fence = null;
@@ -240,8 +241,9 @@ function markdownToHtml(markdown, currentRel) {
   };
   const flushBlockquote = () => {
     if (!blockquote.length) return;
-    const inner = markdownToHtml(blockquote.join("\n"), currentRel);
+    const { html: inner, headings: innerHeadings } = markdownToHtml(blockquote.join("\n"), currentRel);
     html.push(`<blockquote>${inner}</blockquote>`);
+    headings.push(...innerHeadings);
     blockquote = [];
   };
   const splitRow = (line) => {
@@ -315,6 +317,7 @@ function markdownToHtml(markdown, currentRel) {
       const text = heading[2].trim();
       const id = slug(text);
       const inner = inline(text, currentRel);
+      headings.push({ level, id, html: inner });
       if (level === 1) {
         html.push(`<h1 id="${id}">${inner}</h1>`);
       } else {
@@ -360,7 +363,7 @@ function markdownToHtml(markdown, currentRel) {
   flushParagraph();
   closeList();
   flushBlockquote();
-  return html.join("\n");
+  return { html: html.join("\n"), headings };
 }
 
 function inline(text, currentRel) {
@@ -402,21 +405,40 @@ function rewriteHref(href, currentRel) {
   return `${rewritten}${hash ? `#${hash}` : ""}`;
 }
 
-function tocFromHtml(html) {
-  const items = [];
-  const re = /<h([23]) id="([^"]+)">([\s\S]*?)<\/h[23]>/g;
-  let m;
-  while ((m = re.exec(html))) {
-    const text = m[3]
-      .replace(/<a class="anchor"[^>]*>.*?<\/a>/, "")
-      .replace(/<[^>]+>/g, "")
-      .trim();
-    items.push({ level: Number(m[1]), id: m[2], text });
-  }
+function tocFromHeadings(headings) {
+  const items = headings
+    .filter(({ level }) => level === 2 || level === 3)
+    .map(({ level, id, html }) => ({ level, id, text: inlineHtmlToText(html) }));
   if (items.length < 2) return "";
   return `<nav class="toc" aria-label="On this page"><h2>On this page</h2>${items
     .map((i) => `<a class="toc-l${i.level}" href="#${i.id}">${escapeHtml(i.text)}</a>`)
     .join("")}</nav>`;
+}
+
+function inlineHtmlToText(html) {
+  const entities = { "&amp;": "&", "&lt;": "<", "&gt;": ">", "&quot;": '"', "&#39;": "'" };
+  let text = "";
+  let entity = "";
+  let inTag = false;
+  for (let i = 0; i < html.length; i++) {
+    const char = html[i];
+    if (inTag) {
+      if (char === ">") inTag = false;
+    } else if (char === "<") {
+      inTag = true;
+    } else if (entity) {
+      entity += char;
+      if (char === ";" || entity.length === 6) {
+        text += entities[entity] ?? entity;
+        entity = "";
+      }
+    } else if (char === "&") {
+      entity = char;
+    } else {
+      text += char;
+    }
+  }
+  return `${text}${entity}`.trim();
 }
 
 function isHomePage(page) {
