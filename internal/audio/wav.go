@@ -73,12 +73,20 @@ func decodeWAV(r io.ReadSeeker) (Audio, error) {
 			return Audio{}, err
 		}
 		chunkID := string(chunkHeader[0:4])
-		chunkSizeU := binary.LittleEndian.Uint32(chunkHeader[4:8])
-		chunkSize := int(chunkSizeU)
+		chunkSize := int64(binary.LittleEndian.Uint32(chunkHeader[4:8]))
+		if chunkID == "fmt " || chunkID == "data" {
+			remain, err := remainingBytes(r)
+			if err != nil {
+				return Audio{}, err
+			}
+			if chunkSize > remain {
+				return Audio{}, fmt.Errorf("wav: truncated %q chunk (declared %d, remaining %d)", chunkID, chunkSize, remain)
+			}
+		}
 
 		switch chunkID {
 		case "fmt ":
-			if chunkSizeU < 16 {
+			if chunkSize < 16 {
 				return Audio{}, errors.New("wav: short fmt chunk")
 			}
 			fmtFound = true
@@ -94,17 +102,13 @@ func decodeWAV(r io.ReadSeeker) (Audio, error) {
 				return Audio{}, err
 			}
 			if rem := chunkSize - prefix; rem > 0 {
-				if _, err := r.Seek(int64(rem), io.SeekCurrent); err != nil {
+				if _, err := r.Seek(rem, io.SeekCurrent); err != nil {
 					return Audio{}, err
 				}
 			}
 		case "data":
-			remain, err := remainingBytes(r)
-			if err != nil {
-				return Audio{}, err
-			}
-			if int64(chunkSizeU) > remain {
-				return Audio{}, fmt.Errorf("wav: truncated %q chunk (declared %d, remaining %d)", chunkID, chunkSizeU, remain)
+			if uint64(chunkSize) > uint64(^uint(0)>>1) {
+				return Audio{}, fmt.Errorf("wav: data chunk exceeds addressable memory")
 			}
 			dataFound = true
 			data = make([]byte, chunkSize)
@@ -112,7 +116,7 @@ func decodeWAV(r io.ReadSeeker) (Audio, error) {
 				return Audio{}, err
 			}
 		default:
-			if _, err := r.Seek(int64(chunkSize), io.SeekCurrent); err != nil {
+			if _, err := r.Seek(chunkSize, io.SeekCurrent); err != nil {
 				return Audio{}, err
 			}
 		}

@@ -4,6 +4,7 @@ import (
 	"bytes"
 	"os"
 	"path/filepath"
+	"strconv"
 	"strings"
 	"testing"
 	"time"
@@ -130,6 +131,40 @@ func TestDecodeWithFFmpegTimeout(t *testing.T) {
 	msg := strings.ToLower(err.Error())
 	if !strings.Contains(msg, "timed out") && !strings.Contains(msg, "deadline") {
 		t.Fatalf("want timeout/deadline error, got %v", err)
+	}
+}
+
+func TestDecodeWithFFmpegTimeoutWithInheritedPipes(t *testing.T) {
+	dir := t.TempDir()
+	ffmpegPath := filepath.Join(dir, "ffmpeg")
+	pidPath := filepath.Join(dir, "child.pid")
+	script := "#!/bin/sh\n/bin/sleep 5 &\necho $! > \"" + pidPath + "\"\nwait\n"
+	if err := os.WriteFile(ffmpegPath, []byte(script), 0o755); err != nil {
+		t.Fatal(err)
+	}
+	t.Cleanup(func() {
+		data, err := os.ReadFile(pidPath)
+		if err != nil {
+			return
+		}
+		pid, err := strconv.Atoi(strings.TrimSpace(string(data)))
+		if err == nil && pid > 0 {
+			if process, err := os.FindProcess(pid); err == nil {
+				_ = process.Kill()
+			}
+		}
+	})
+
+	start := time.Now()
+	_, err := DecodeWithFFmpeg("input.bin", nil, 44100, ffmpegPath, time.Second)
+	if elapsed := time.Since(start); elapsed > 4*time.Second {
+		t.Fatalf("inherited pipes delayed timeout: %v", elapsed)
+	}
+	if _, statErr := os.Stat(pidPath); statErr != nil {
+		t.Fatalf("wrapper did not start its child: %v", statErr)
+	}
+	if err == nil || !strings.Contains(err.Error(), "timed out") {
+		t.Fatalf("expected timeout, got %v", err)
 	}
 }
 

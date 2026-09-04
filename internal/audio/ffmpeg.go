@@ -41,6 +41,10 @@ func DecodeWithFFmpeg(path string, stdin io.Reader, sampleRate int, ffmpegPath s
 	}
 	defer cancel()
 	cmd := exec.CommandContext(ctx, ffmpeg, args...)
+	if timeout > 0 {
+		// A wrapper's child may retain the pipes after the wrapper is killed.
+		cmd.WaitDelay = time.Second
+	}
 	if stdin != nil {
 		cmd.Stdin = stdin
 	}

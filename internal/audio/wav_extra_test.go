@@ -140,6 +140,30 @@ func TestDecodeWAVHugeFmtChunkSize(t *testing.T) {
 	}
 }
 
+func TestDecodeWAVDataBeforeTruncatedFmt(t *testing.T) {
+	buf := &bytes.Buffer{}
+	buf.WriteString("RIFF")
+	writeU32(buf, 4+(8+4)+(8+40))
+	buf.WriteString("WAVE")
+	buf.WriteString("data")
+	writeU32(buf, 4)
+	buf.Write([]byte{0, 0, 0, 0})
+	buf.WriteString("fmt ")
+	writeU32(buf, (1<<20)+16)
+	writeU16(buf, 1)
+	writeU16(buf, 1)
+	writeU32(buf, 44100)
+	writeU32(buf, 44100*2)
+	writeU16(buf, 2)
+	writeU16(buf, 16)
+	buf.Write(make([]byte, 24))
+
+	_, err := DecodeBytes(buf.Bytes(), Options{})
+	if err == nil || !strings.Contains(err.Error(), "truncated") {
+		t.Fatalf("expected truncated fmt error, got %v", err)
+	}
+}
+
 func TestDecodeWAVExtendedFmtOver1MiB(t *testing.T) {
 	// Current main reads the full declared fmt payload. A 1 MiB
 	// ceiling would reject a complete file the prefix-and-seek path

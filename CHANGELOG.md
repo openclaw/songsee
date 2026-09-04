@@ -2,8 +2,10 @@
 
 ## 0.1.2 - Unreleased
 
+- Decoding: reject truncated WAV format/data payloads before allocation or seeking, preserve complete large WAV files, and add an opt-in `--ffmpeg-timeout` with an unlimited default. Thanks @SebTardif.
+- Dependencies: update Kong to 1.16.1.
 - Install: make `go install ...@latest` builds report their tagged module version instead of `dev`.
-- Build and CI: update to Go 1.26, Alpine 3.24, current analysis tools, and pinned GitHub Actions.
+- Build and CI: update to Go 1.27, Node 26, Alpine 3.24, current analysis tools, and pinned GitHub Actions; run docs tests on pull requests.
 - Docker: add a local image with bundled `ffmpeg` and CI smoke coverage.
 - CLI: list the `claw` palette in `--help` and reject invalid `--style`/`--viz` values before decoding input.
 - Palettes: rename `clawd` to `claw`; the old name remains accepted as a compatibility alias.

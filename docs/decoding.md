@@ -21,7 +21,7 @@ Pure-Go WAV decoder. Handles:
 - 32-bit float, 64-bit float
 - WAVE_FORMAT_EXTENSIBLE (with channel masks and sub-format GUIDs)
 
-No external dependency, no ffmpeg roundtrip. The decoder validates the RIFF header and rejects truncated or forged `data` chunks whose declared size exceeds the remaining file bytes, before allocating the sample buffer. Ordinary native WAV files have no fixed duration or payload ceiling. `fmt` reads a 40-byte prefix and seeks the rest of the declared payload. Unknown RIFF chunks are seeked, not allocated.
+No external dependency, no ffmpeg roundtrip. The decoder validates the RIFF header and rejects truncated or forged `fmt` and `data` chunks whose declared size exceeds the remaining file bytes, before allocating or skipping their payloads. Ordinary native WAV files have no fixed duration or payload ceiling. `fmt` reads at most a 40-byte prefix and seeks the validated remainder. Unknown RIFF chunks are skipped by seeking, without allocating their payloads.
 
 ## Native MP3
 
@@ -45,6 +45,8 @@ Tweak the pipeline with:
 - `--ffmpeg-timeout DURATION` — optional ffmpeg deadline (Go duration, default `0s` = none). Negative values are rejected.
 
 ffmpeg has no deadline by default, matching prior releases. Set `--ffmpeg-timeout 30s` (or `Options.FFmpegTimeout`) when a hung fallback should fail instead of blocking.
+
+After a deadline, songsee allows up to one second for subprocess I/O pipes to close. Custom ffmpeg wrappers should use `exec` to replace themselves with ffmpeg so cancellation kills the decoder directly.
 
 If ffmpeg isn't on `PATH` and the file isn't WAV or MP3, songsee fails with a clear error. Install with `brew install ffmpeg` or your distro's package manager.
 
