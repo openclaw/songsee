@@ -9,6 +9,7 @@
 - CLI: list the `claw` palette in `--help` and reject invalid `--style`/`--viz` values before decoding input.
 - Palettes: rename `clawd` to `claw`; the old name remains accepted as a compatibility alias.
 - Rendering: reduce per-pixel overhead in heatmap, spectrogram, and curve drawing.
+- CI: update the pinned Pages deployment action to 5.0.1 for deployment polling backoff and jitter.
 
 ## 0.1.1 - 2026-05-10
 
