@@ -1,5 +1,7 @@
 # Changelog
 
+## 0.1.3 - Unreleased
+
 ## 0.1.2 - 2026-09-05
 
 **Highlights:** Run Songsee in Docker with ffmpeg included, and get accurate version reporting from Go-installed builds.
