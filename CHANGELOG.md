@@ -5,6 +5,7 @@
 **Highlights:** Run Songsee in Docker with ffmpeg included, and get accurate version reporting from Go-installed builds.
 
 - Docker: add a local image with bundled `ffmpeg` for batch and server rendering without host audio tooling.
+- Decoding: reject truncated WAV format/data payloads before allocation or seeking, preserve complete large WAV files, and add an opt-in `--ffmpeg-timeout` with an unlimited default. Thanks @SebTardif.
 - Install: make `go install ...@latest` builds report their tagged module version instead of `dev`.
 - CLI: list the `claw` palette in `--help` and reject invalid `--style`/`--viz` values before decoding input.
 - Palettes: rename `clawd` to `claw`; the old name remains accepted as a compatibility alias.

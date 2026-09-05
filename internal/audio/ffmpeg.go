@@ -3,15 +3,21 @@ package audio
 
 import (
 	"bytes"
+	"context"
 	"encoding/binary"
 	"fmt"
 	"io"
 	"math"
 	"os/exec"
+	"time"
 )
 
 // DecodeWithFFmpeg uses ffmpeg to decode any input into mono float samples.
-func DecodeWithFFmpeg(path string, stdin io.Reader, sampleRate int, ffmpegPath string) (Audio, error) {
+// timeout 0 means no deadline (same as prior releases).
+func DecodeWithFFmpeg(path string, stdin io.Reader, sampleRate int, ffmpegPath string, timeout time.Duration) (Audio, error) {
+	if timeout < 0 {
+		return Audio{}, fmt.Errorf("ffmpeg timeout must be >= 0 (got %s)", timeout)
+	}
 	if sampleRate <= 0 {
 		sampleRate = 44100
 	}
@@ -28,7 +34,17 @@ func DecodeWithFFmpeg(path string, stdin io.Reader, sampleRate int, ffmpegPath s
 	}
 	args = append(args, "-f", "f32le", "-ac", "1", "-ar", fmt.Sprintf("%d", sampleRate), "-")
 
-	cmd := exec.Command(ffmpeg, args...)
+	ctx := context.Background()
+	cancel := func() {}
+	if timeout > 0 {
+		ctx, cancel = context.WithTimeout(context.Background(), timeout)
+	}
+	defer cancel()
+	cmd := exec.CommandContext(ctx, ffmpeg, args...)
+	if timeout > 0 {
+		// A wrapper's child may retain the pipes after the wrapper is killed.
+		cmd.WaitDelay = time.Second
+	}
 	if stdin != nil {
 		cmd.Stdin = stdin
 	}
@@ -36,6 +52,9 @@ func DecodeWithFFmpeg(path string, stdin io.Reader, sampleRate int, ffmpegPath s
 	cmd.Stderr = &stderr
 	out, err := cmd.Output()
 	if err != nil {
+		if timeout > 0 && ctx.Err() != nil {
+			return Audio{}, fmt.Errorf("ffmpeg: timed out after %s: %w", timeout, ctx.Err())
+		}
 		if stderr.Len() > 0 {
 			return Audio{}, fmt.Errorf("ffmpeg: %v: %s", err, stderr.String())
 		}

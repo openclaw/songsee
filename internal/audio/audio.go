@@ -1,7 +1,10 @@
 // Package audio handles decoding audio into mono float samples.
 package audio
 
-import "fmt"
+import (
+	"fmt"
+	"time"
+)
 
 // Audio holds mono samples in [-1,1] range.
 type Audio struct {
@@ -11,8 +14,9 @@ type Audio struct {
 
 // Options controls decoding behavior.
 type Options struct {
-	SampleRate int
-	FFmpegPath string
+	SampleRate    int
+	FFmpegPath    string
+	FFmpegTimeout time.Duration // 0 means no deadline
 }
 
 var (

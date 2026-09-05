@@ -2,6 +2,7 @@ package audio
 
 import (
 	"bytes"
+	"strings"
 	"testing"
 )
 
@@ -90,6 +91,256 @@ func TestDecodeWAVInvalidChannels(t *testing.T) {
 
 	if _, err := DecodeBytes(buf.Bytes(), Options{}); err == nil {
 		t.Fatalf("expected error for channels")
+	}
+}
+
+func TestDecodeWAVHugeDataChunkSize(t *testing.T) {
+	// Crafted header claims a 4GiB-1 data chunk. Unfixed code
+	// make([]byte, chunkSize) from the raw uint32 may OOM or panic.
+	buf := &bytes.Buffer{}
+	buf.WriteString("RIFF")
+	writeU32(buf, 4+(8+16)+(8+4))
+	buf.WriteString("WAVE")
+
+	buf.WriteString("fmt ")
+	writeU32(buf, 16)
+	writeU16(buf, 1)
+	writeU16(buf, 1)
+	writeU32(buf, 44100)
+	writeU32(buf, 44100*2)
+	writeU16(buf, 2)
+	writeU16(buf, 16)
+
+	buf.WriteString("data")
+	writeU32(buf, 0xffffffff)
+	buf.Write([]byte{0, 0, 0, 0})
+
+	_, err := decodeWAV(bytes.NewReader(buf.Bytes()))
+	if err == nil {
+		t.Fatal("expected error for huge data chunkSize")
+	}
+	if !strings.Contains(err.Error(), "truncated") {
+		t.Fatalf("want truncated-header error, got %v", err)
+	}
+}
+
+func TestDecodeWAVHugeFmtChunkSize(t *testing.T) {
+	buf := &bytes.Buffer{}
+	buf.WriteString("RIFF")
+	writeU32(buf, 4+8)
+	buf.WriteString("WAVE")
+
+	buf.WriteString("fmt ")
+	writeU32(buf, 0xffffffff)
+	buf.Write([]byte{0, 0, 0, 0})
+
+	_, err := decodeWAV(bytes.NewReader(buf.Bytes()))
+	if err == nil {
+		t.Fatal("expected error for huge fmt chunkSize")
+	}
+}
+
+func TestDecodeWAVDataBeforeTruncatedFmt(t *testing.T) {
+	buf := &bytes.Buffer{}
+	buf.WriteString("RIFF")
+	writeU32(buf, 4+(8+4)+(8+40))
+	buf.WriteString("WAVE")
+	buf.WriteString("data")
+	writeU32(buf, 4)
+	buf.Write([]byte{0, 0, 0, 0})
+	buf.WriteString("fmt ")
+	writeU32(buf, (1<<20)+16)
+	writeU16(buf, 1)
+	writeU16(buf, 1)
+	writeU32(buf, 44100)
+	writeU32(buf, 44100*2)
+	writeU16(buf, 2)
+	writeU16(buf, 16)
+	buf.Write(make([]byte, 24))
+
+	_, err := DecodeBytes(buf.Bytes(), Options{})
+	if err == nil || !strings.Contains(err.Error(), "truncated") {
+		t.Fatalf("expected truncated fmt error, got %v", err)
+	}
+}
+
+func TestDecodeWAVExtendedFmtOver1MiB(t *testing.T) {
+	// Current main reads the full declared fmt payload. A 1 MiB
+	// ceiling would reject a complete file the prefix-and-seek path
+	// can already skip without allocating the tail.
+	payload := []byte{0, 0, 0, 0}
+	fmtSize := (1 << 20) + 16
+	buf := &bytes.Buffer{}
+	buf.WriteString("RIFF")
+	writeU32(buf, uint32(4+(8+fmtSize)+(8+len(payload))))
+	buf.WriteString("WAVE")
+
+	buf.WriteString("fmt ")
+	writeU32(buf, uint32(fmtSize))
+	writeU16(buf, 1)
+	writeU16(buf, 1)
+	writeU32(buf, 44100)
+	writeU32(buf, 44100*2)
+	writeU16(buf, 2)
+	writeU16(buf, 16)
+	buf.Write(make([]byte, fmtSize-16))
+
+	buf.WriteString("data")
+	writeU32(buf, uint32(len(payload)))
+	buf.Write(payload)
+
+	pcm, err := DecodeBytes(buf.Bytes(), Options{})
+	if err != nil {
+		t.Fatalf("DecodeBytes: %v", err)
+	}
+	if len(pcm.Samples) == 0 {
+		t.Fatalf("empty samples")
+	}
+}
+
+func TestDecodeWAVExtendedFmtOver1KiB(t *testing.T) {
+	// Main accepts fmt payloads larger than WAVEFORMATEXTENSIBLE (40)
+	// and ignores the trailing bytes. A 1 KiB reject would break those.
+	payload := []byte{0, 0, 0, 0}
+	fmtSize := 2048
+	buf := &bytes.Buffer{}
+	buf.WriteString("RIFF")
+	writeU32(buf, uint32(4+(8+fmtSize)+(8+len(payload))))
+	buf.WriteString("WAVE")
+
+	buf.WriteString("fmt ")
+	writeU32(buf, uint32(fmtSize))
+	writeU16(buf, 1)
+	writeU16(buf, 1)
+	writeU32(buf, 44100)
+	writeU32(buf, 44100*2)
+	writeU16(buf, 2)
+	writeU16(buf, 16)
+	buf.Write(make([]byte, fmtSize-16))
+
+	buf.WriteString("data")
+	writeU32(buf, uint32(len(payload)))
+	buf.Write(payload)
+
+	pcm, err := DecodeBytes(buf.Bytes(), Options{})
+	if err != nil {
+		t.Fatalf("DecodeBytes: %v", err)
+	}
+	if len(pcm.Samples) == 0 {
+		t.Fatalf("empty samples")
+	}
+}
+
+func TestDecodeWAVOneGiBDataHeaderRejected(t *testing.T) {
+	buf := &bytes.Buffer{}
+	buf.WriteString("RIFF")
+	writeU32(buf, 4+(8+16)+(8+4))
+	buf.WriteString("WAVE")
+
+	buf.WriteString("fmt ")
+	writeU32(buf, 16)
+	writeU16(buf, 1)
+	writeU16(buf, 1)
+	writeU32(buf, 44100)
+	writeU32(buf, 44100*2)
+	writeU16(buf, 2)
+	writeU16(buf, 16)
+
+	buf.WriteString("data")
+	writeU32(buf, 1<<30)
+	buf.Write([]byte{0, 0, 0, 0})
+
+	_, err := decodeWAV(bytes.NewReader(buf.Bytes()))
+	if err == nil {
+		t.Fatal("expected error for 1GiB data header")
+	}
+	if !strings.Contains(err.Error(), "truncated") {
+		t.Fatalf("want truncated-header error, got %v", err)
+	}
+}
+
+func TestDecodeWAVValidDataAboveOld32MiBCap(t *testing.T) {
+	// 32 MiB + 4 bytes of 16-bit stereo is a valid native WAV that the
+	// old fixed ceilings rejected before --duration could slice it.
+	payload := make([]byte, (32<<20)+4)
+	buf := &bytes.Buffer{}
+	buf.WriteString("RIFF")
+	writeU32(buf, uint32(4+(8+16)+(8+len(payload))))
+	buf.WriteString("WAVE")
+	buf.WriteString("fmt ")
+	writeU32(buf, 16)
+	writeU16(buf, 1)
+	writeU16(buf, 2)
+	writeU32(buf, 44100)
+	writeU32(buf, 44100*4)
+	writeU16(buf, 4)
+	writeU16(buf, 16)
+	buf.WriteString("data")
+	writeU32(buf, uint32(len(payload)))
+	buf.Write(payload)
+
+	pcm, err := decodeWAV(bytes.NewReader(buf.Bytes()))
+	if err != nil {
+		t.Fatalf("valid native WAV above 32 MiB: %v", err)
+	}
+	if len(pcm.Samples) != len(payload)/4 {
+		t.Fatalf("samples=%d want %d", len(pcm.Samples), len(payload)/4)
+	}
+}
+
+func TestDecodeWAV16BitOver8MiBNotSampleCap(t *testing.T) {
+	// 9 MiB of 16-bit mono is 4.5M samples, under maxDecodedSamples.
+	// Comparing the byte count to the sample cap used to reject this.
+	payload := []byte{0, 0}
+	buf := &bytes.Buffer{}
+	buf.WriteString("RIFF")
+	writeU32(buf, uint32(4+(8+16)+(8+len(payload))))
+	buf.WriteString("WAVE")
+	buf.WriteString("fmt ")
+	writeU32(buf, 16)
+	writeU16(buf, 1)
+	writeU16(buf, 1)
+	writeU32(buf, 44100)
+	writeU32(buf, 44100*2)
+	writeU16(buf, 2)
+	writeU16(buf, 16)
+	buf.WriteString("data")
+	writeU32(buf, 9<<20)
+	buf.Write(payload)
+
+	_, err := decodeWAV(bytes.NewReader(buf.Bytes()))
+	if err == nil {
+		t.Fatal("expected truncated data chunk")
+	}
+	if !strings.Contains(err.Error(), "truncated") {
+		t.Fatalf("want truncated-header error, got %v", err)
+	}
+}
+
+func TestDecodeWAVLargeUnknownChunkNotCapped(t *testing.T) {
+	payload := []byte{0, 0, 0, 0}
+	buf := &bytes.Buffer{}
+	buf.WriteString("RIFF")
+	writeU32(buf, uint32(4+(8+16)+(8+4)+(8+len(payload))))
+	buf.WriteString("WAVE")
+	buf.WriteString("fmt ")
+	writeU32(buf, 16)
+	writeU16(buf, 1)
+	writeU16(buf, 1)
+	writeU32(buf, 44100)
+	writeU32(buf, 44100*2)
+	writeU16(buf, 2)
+	writeU16(buf, 16)
+	buf.WriteString("JUNK")
+	writeU32(buf, 40<<20)
+	buf.Write([]byte{1, 2, 3, 4})
+	buf.WriteString("data")
+	writeU32(buf, uint32(len(payload)))
+	buf.Write(payload)
+
+	_, err := decodeWAV(bytes.NewReader(buf.Bytes()))
+	if err != nil && strings.Contains(err.Error(), "too large") {
+		t.Fatalf("seek-only unknown chunk was size-capped: %v", err)
 	}
 }
 

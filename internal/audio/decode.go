@@ -40,7 +40,7 @@ func DecodeFile(path string, opts Options) (Audio, error) {
 	if opts.SampleRate == 0 {
 		opts.SampleRate = 44100
 	}
-	pcm, err := DecodeWithFFmpeg(path, nil, opts.SampleRate, opts.FFmpegPath)
+	pcm, err := DecodeWithFFmpeg(path, nil, opts.SampleRate, opts.FFmpegPath, opts.FFmpegTimeout)
 	if err != nil {
 		return Audio{}, fmt.Errorf("%w; ffmpeg fallback failed: %v", ErrUnsupported, err)
 	}
@@ -61,7 +61,7 @@ func DecodeBytes(data []byte, opts Options) (Audio, error) {
 	if opts.SampleRate == 0 {
 		opts.SampleRate = 44100
 	}
-	pcm, err := DecodeWithFFmpeg("", bytes.NewReader(data), opts.SampleRate, opts.FFmpegPath)
+	pcm, err := DecodeWithFFmpeg("", bytes.NewReader(data), opts.SampleRate, opts.FFmpegPath, opts.FFmpegTimeout)
 	if err != nil {
 		return Audio{}, fmt.Errorf("%w; ffmpeg fallback failed: %v", ErrUnsupported, err)
 	}
