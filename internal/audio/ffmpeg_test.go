@@ -138,7 +138,7 @@ func TestDecodeWithFFmpegTimeoutWithInheritedPipes(t *testing.T) {
 	dir := t.TempDir()
 	ffmpegPath := filepath.Join(dir, "ffmpeg")
 	pidPath := filepath.Join(dir, "child.pid")
-	script := "#!/bin/sh\n/bin/sleep 5 &\necho $! > \"" + pidPath + "\"\nwait\n"
+	script := "#!/bin/sh\n/bin/sleep 30 &\necho $! > \"" + pidPath + "\"\nwait\n"
 	if err := os.WriteFile(ffmpegPath, []byte(script), 0o755); err != nil {
 		t.Fatal(err)
 	}
@@ -155,9 +155,11 @@ func TestDecodeWithFFmpegTimeoutWithInheritedPipes(t *testing.T) {
 		}
 	})
 
+	// Allow the wrapper to start on a busy host; the child outlives this bound.
+	const timeout = 5 * time.Second
 	start := time.Now()
-	_, err := DecodeWithFFmpeg("input.bin", nil, 44100, ffmpegPath, time.Second)
-	if elapsed := time.Since(start); elapsed > 4*time.Second {
+	_, err := DecodeWithFFmpeg("input.bin", nil, 44100, ffmpegPath, timeout)
+	if elapsed := time.Since(start); elapsed > timeout+3*time.Second {
 		t.Fatalf("inherited pipes delayed timeout: %v", elapsed)
 	}
 	if _, statErr := os.Stat(pidPath); statErr != nil {
