@@ -2,14 +2,16 @@
 
 ## 0.1.2 - Unreleased
 
-- Dependencies: update Kong to 1.16.1.
+**Highlights:** Run Songsee in Docker with ffmpeg included, and get accurate version reporting from Go-installed builds.
+
+- Docker: add a local image with bundled `ffmpeg` for batch and server rendering without host audio tooling.
 - Install: make `go install ...@latest` builds report their tagged module version instead of `dev`.
-- Build and CI: update to Go 1.27, Node 26, Alpine 3.24, current analysis tools, and pinned GitHub Actions; run docs tests on pull requests.
-- Docker: add a local image with bundled `ffmpeg` and CI smoke coverage.
 - CLI: list the `claw` palette in `--help` and reject invalid `--style`/`--viz` values before decoding input.
 - Palettes: rename `clawd` to `claw`; the old name remains accepted as a compatibility alias.
 - Rendering: reduce per-pixel overhead in heatmap, spectrogram, and curve drawing.
-- Build and CI: update the Dockerfile frontend to 1.27 and the pinned Pages deployment action to 5.0.1 for deployment polling backoff and jitter.
+- Docs: fix table-of-contents links for formatted and repeated headings, correct the install smoke-test fixture, and align the release checklist with automated Homebrew updates. Thanks @vincentkoc.
+- Dependencies: update Kong to 1.16.1.
+- Build and CI: update to Go 1.27, Node 26, Alpine 3.24, Dockerfile frontend 1.27, current analysis tools, and pinned GitHub Actions; add deadcode checks, docs tests, Docker smoke coverage, and restricted workflow token permissions. Thanks @vincentkoc.
 
 ## 0.1.1 - 2026-05-10
 
