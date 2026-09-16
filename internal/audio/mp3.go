@@ -14,7 +14,8 @@ func DecodeMP3If(r io.ReadSeeker) (Audio, bool, error) {
 	if _, err := io.ReadFull(r, header); err != nil {
 		return Audio{}, false, err
 	}
-	isMP3 := string(header[0:3]) == "ID3" || (header[0] == 0xFF && header[1]&0xE0 == 0xE0)
+	// ADTS AAC and other MPEG audio layers share the sync prefix with Layer III.
+	isMP3 := string(header[0:3]) == "ID3" || (header[0] == 0xFF && header[1]&0xE6 == 0xE2)
 	_, _ = r.Seek(0, io.SeekStart)
 	if !isMP3 {
 		return Audio{}, false, nil

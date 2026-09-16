@@ -2,6 +2,8 @@
 
 ## 0.1.3 - Unreleased
 
+- Decoding: distinguish Layer III headers from raw ADTS AAC and MPEG Layer I/II so supported inputs reach ffmpeg instead of failing in the MP3 decoder.
+- Output: strip uppercase and mixed-case input extensions when deriving the default image name, producing `TRACK.jpg` from `TRACK.WAV`.
 - Tempogram: preserve the original onset timing when limiting time columns, keeping tempo rows accurate on longer audio instead of shifting or averaging away beats.
 - Slicing: reject non-finite times and bound sample indices before integer conversion, preventing oversized starts from panicking and large durations from overflowing instead of clamping to the remaining audio.
 

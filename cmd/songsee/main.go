@@ -141,7 +141,7 @@ func run(args []string, stdin io.Reader, stdout, stderr io.Writer) int {
 		if input == "-" {
 			output = "songsee." + format
 		} else {
-			ext := strings.ToLower(filepath.Ext(input))
+			ext := filepath.Ext(input)
 			base := strings.TrimSuffix(filepath.Base(input), ext)
 			output = filepath.Join(filepath.Dir(input), base+"."+format)
 		}
