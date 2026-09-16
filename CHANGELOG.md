@@ -2,6 +2,7 @@
 
 ## 0.1.3 - Unreleased
 
+- Tempogram: preserve the original onset timing when limiting time columns, keeping tempo rows accurate on longer audio instead of shifting or averaging away beats.
 - Slicing: reject non-finite times and bound sample indices before integer conversion, preventing oversized starts from panicking and large durations from overflowing instead of clamping to the remaining audio.
 
 ## 0.1.2 - 2026-09-05

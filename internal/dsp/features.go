@@ -238,10 +238,10 @@ func Tempogram(spec *Spectrogram, minBPM, maxBPM, maxFrames int) FeatureMap {
 		maxBPM = minBPM + 60
 	}
 	flux := SpectralFlux(spec)
-	if maxFrames > 0 && len(flux) > maxFrames {
-		flux = downsampleSignal(flux, maxFrames)
-	}
 	frames := len(flux)
+	if maxFrames > 0 && frames > maxFrames {
+		frames = maxFrames
+	}
 	bpmBins := maxBPM - minBPM + 1
 	out := NewFeatureMap(frames, bpmBins)
 
@@ -253,18 +253,23 @@ func Tempogram(spec *Spectrogram, minBPM, maxBPM, maxFrames int) FeatureMap {
 	if window < 8 {
 		window = 8
 	}
-	if window > frames {
-		window = frames
+	if window > len(flux) {
+		window = len(flux)
 	}
 
 	for t := 0; t < frames; t++ {
-		start := t - window/2
-		end := t + window/2
+		// Limit output columns without changing the onset signal's time resolution.
+		center := len(flux) / 2
+		if frames > 1 {
+			center = int(float64(t) * float64(len(flux)-1) / float64(frames-1))
+		}
+		start := center - window/2
+		end := center + window/2
 		if start < 0 {
 			start = 0
 		}
-		if end >= frames {
-			end = frames - 1
+		if end >= len(flux) {
+			end = len(flux) - 1
 		}
 		for bpm := minBPM; bpm <= maxBPM; bpm++ {
 			lag := int(math.Round(fps * 60 / float64(bpm)))
@@ -409,30 +414,6 @@ func hzToMel(hz float64) float64 {
 
 func melToHz(mel float64) float64 {
 	return 700 * (math.Pow(10, mel/2595) - 1)
-}
-
-func downsampleSignal(in []float64, maxFrames int) []float64 {
-	if len(in) <= maxFrames || maxFrames <= 0 {
-		return in
-	}
-	out := make([]float64, maxFrames)
-	ratio := float64(len(in)) / float64(maxFrames)
-	for x := 0; x < maxFrames; x++ {
-		start := int(math.Floor(float64(x) * ratio))
-		end := int(math.Floor(float64(x+1) * ratio))
-		if end <= start {
-			end = start + 1
-		}
-		if end > len(in) {
-			end = len(in)
-		}
-		sum := 0.0
-		for i := start; i < end; i++ {
-			sum += in[i]
-		}
-		out[x] = sum / float64(end-start)
-	}
-	return out
 }
 
 func median(values []float64) float64 {

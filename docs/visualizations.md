@@ -77,7 +77,7 @@ songsee track.mp3 --viz loudness
 
 ## tempogram
 
-Tempo variation over time. An autocorrelation-style heatmap of the onset envelope, scanning 30–240 BPM in 256 bins.
+Tempo variation over time. An autocorrelation-style heatmap of the onset envelope, scanning 30–240 BPM in 211 rows and up to 256 time columns. Each column analyzes an eight-second window (clipped at the audio boundaries) at the original onset frame rate, so limiting the displayed columns does not shift the tempo or average away beats.
 
 Reveals tempo drift, rubato, and switches between rhythmic feels.
 
