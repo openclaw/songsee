@@ -11,6 +11,7 @@ The render stage maps numeric spectrogram and feature data onto pixels, applies 
 
 ```bash
 songsee track.mp3                       # writes track.jpg next to the input
+songsee TRACK.WAV                       # writes TRACK.jpg; extension case does not affect naming
 songsee track.mp3 -o out.png            # explicit path; format inferred from extension
 songsee track.mp3 -o spectro            # no extension; appends ".jpg" by default
 songsee - -o -                          # stdin in, encoded image to stdout

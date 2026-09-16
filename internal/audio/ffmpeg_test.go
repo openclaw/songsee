@@ -174,7 +174,7 @@ func installFakeFFmpeg(t *testing.T) string {
 	t.Helper()
 	dir := t.TempDir()
 	path := filepath.Join(dir, "ffmpeg")
-	script := "#!/bin/sh\nprintf '\\x00\\x00\\x00\\x00\\x00\\x00\\x00\\x3f'\n"
+	script := "#!/bin/sh\nprintf '\\000\\000\\000\\000\\000\\000\\000\\077'\n"
 	if err := os.WriteFile(path, []byte(script), 0o755); err != nil {
 		t.Fatalf("WriteFile: %v", err)
 	}

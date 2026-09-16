@@ -964,3 +964,31 @@ func TestRunLargeSliceBounds(t *testing.T) {
 		})
 	}
 }
+
+func TestRunDefaultOutputMixedCaseExtension(t *testing.T) {
+	for _, name := range []string{"Track.WAV", "Track.WaV", "Track.wav"} {
+		t.Run(name, func(t *testing.T) {
+			dir := t.TempDir()
+			input := filepath.Join(dir, name)
+			if err := os.WriteFile(input, makeWAV([]int16{0, 1000, -1000, 0}, 44100, 1), 0o644); err != nil {
+				t.Fatal(err)
+			}
+			stdout, stderr := &bytes.Buffer{}, &bytes.Buffer{}
+			exit := run([]string{input, "--format=png", "--width=16", "--height=16"}, bytes.NewReader(nil), stdout, stderr)
+			if exit != 0 {
+				t.Fatalf("exit %d: %s", exit, stderr.String())
+			}
+			output := filepath.Join(dir, "Track.png")
+			if stdout.String() != output+"\n" {
+				t.Fatalf("output = %q, want %q", stdout.String(), output+"\n")
+			}
+			data, err := os.ReadFile(output)
+			if err != nil {
+				t.Fatal(err)
+			}
+			if _, err := png.Decode(bytes.NewReader(data)); err != nil {
+				t.Fatalf("decode output: %v", err)
+			}
+		})
+	}
+}

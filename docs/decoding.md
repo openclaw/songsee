@@ -25,7 +25,7 @@ No external dependency, no ffmpeg roundtrip. The decoder validates the RIFF head
 
 ## Native MP3
 
-Pure-Go MP3 decoder. Handles MPEG-1/2 Layer III with VBR and CBR. Output sample rate is whatever the file declares; songsee does not resample.
+Pure-Go MP3 decoder. Handles MPEG-1/2 Layer III with VBR and CBR. Output sample rate is whatever the file declares; songsee does not resample. The frame-header probe requires Layer III, so raw ADTS AAC and MPEG Layer I/II streams reach the ffmpeg fallback despite sharing a similar sync prefix.
 
 If the decoder hits a malformed frame it surfaces a structured error instead of silently truncating, so corrupt input fails loudly.
 
