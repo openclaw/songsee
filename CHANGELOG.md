@@ -2,6 +2,8 @@
 
 ## 0.1.3 - Unreleased
 
+- Slicing: reject non-finite times and bound sample indices before integer conversion, preventing oversized starts from panicking and large durations from overflowing instead of clamping to the remaining audio.
+
 ## 0.1.2 - 2026-09-05
 
 **Highlights:** Run Songsee in Docker with ffmpeg included, and get accurate version reporting from Go-installed builds.

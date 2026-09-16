@@ -121,8 +121,8 @@ func run(args []string, stdin io.Reader, stdout, stderr io.Writer) int {
 	if !isPowerOfTwo(cfg.WindowSize) {
 		return dieUsage(stderr, ctx, "--window must be a power of two")
 	}
-	if cfg.StartSec < 0 || cfg.Duration < 0 {
-		return dieUsage(stderr, ctx, "--start and --duration must be >= 0")
+	if math.IsNaN(cfg.StartSec) || math.IsInf(cfg.StartSec, 0) || math.IsNaN(cfg.Duration) || math.IsInf(cfg.Duration, 0) || cfg.StartSec < 0 || cfg.Duration < 0 {
+		return dieUsage(stderr, ctx, "--start and --duration must be finite and >= 0")
 	}
 	if cfg.FFmpegTimeout < 0 {
 		return dieUsage(stderr, ctx, "--ffmpeg-timeout must be >= 0")

@@ -924,3 +924,43 @@ func genSineMixSamples(n int) []int16 {
 	}
 	return out
 }
+
+func TestRunRejectsNonFiniteSliceBeforeDecode(t *testing.T) {
+	for _, flag := range []string{"--start", "--duration"} {
+		for _, value := range []string{"NaN", "+Inf", "-Inf"} {
+			t.Run(flag+"="+value, func(t *testing.T) {
+				stdout, stderr := &bytes.Buffer{}, &bytes.Buffer{}
+				exit := run([]string{flag + "=" + value, "missing.wav"}, bytes.NewReader(nil), stdout, stderr)
+				if exit != 2 || !strings.Contains(stderr.String(), "finite") {
+					t.Fatalf("expected usage error for non-finite time, got %d: %s", exit, stderr.String())
+				}
+			})
+		}
+	}
+}
+
+func TestRunLargeSliceBounds(t *testing.T) {
+	wav := makeWAV([]int16{0, 1000, -1000, 0}, 10, 1)
+	for _, tt := range []struct {
+		flag     string
+		wantExit int
+	}{
+		{"--start=1e20", 1},
+		{"--duration=1e20", 0},
+	} {
+		t.Run(tt.flag, func(t *testing.T) {
+			stdout, stderr := &bytes.Buffer{}, &bytes.Buffer{}
+			exit := run([]string{"--start=0.1", tt.flag, "--width=16", "--height=16", "--format=png", "-o", "-", "-"}, bytes.NewReader(wav), stdout, stderr)
+			if exit != tt.wantExit {
+				t.Fatalf("exit %d, want %d: %s", exit, tt.wantExit, stderr.String())
+			}
+			if exit == 0 {
+				if _, err := png.Decode(stdout); err != nil {
+					t.Fatalf("decode output: %v", err)
+				}
+			} else if !strings.Contains(stderr.String(), "start beyond end") {
+				t.Fatalf("unexpected error: %s", stderr.String())
+			}
+		})
+	}
+}
