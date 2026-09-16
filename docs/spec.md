@@ -50,7 +50,7 @@ Magnitude is converted to decibels with `20·log10(mag + 1e-9)` for the base spe
 | `hpss` | median filters on STFT | 9-frame harmonic + 9-frame percussive kernels |
 | `selfsim` | cosine sim on chroma frames | gamma 1.4; clamped 10th–98th percentile |
 | `loudness` | per-frame RMS | clamped to 95th percentile |
-| `tempogram` | onset autocorrelation | 30–240 BPM, 256 bins |
+| `tempogram` | onset autocorrelation | 30–240 BPM (211 rows), up to 256 time columns; eight-second windows at the original onset frame rate |
 | `flux` | frame-to-frame STFT delta | clamped to 95th percentile |
 
 The percentile sampling reservoir is capped at 20 000 values per panel for speed; this is dense enough that boundaries are stable across runs.

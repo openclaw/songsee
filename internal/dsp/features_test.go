@@ -250,22 +250,6 @@ func TestSpectralFluxShort(t *testing.T) {
 	}
 }
 
-func TestDownsampleSignalNoop(t *testing.T) {
-	in := []float64{1, 2, 3}
-	out := downsampleSignal(in, 0)
-	if len(out) != len(in) {
-		t.Fatalf("downsample noop")
-	}
-}
-
-func TestDownsampleSignal(t *testing.T) {
-	in := []float64{1, 2, 3, 4}
-	out := downsampleSignal(in, 2)
-	if len(out) != 2 {
-		t.Fatalf("downsample size mismatch")
-	}
-}
-
 func TestMelConversions(t *testing.T) {
 	if hzToMel(0) != 0 {
 		t.Fatalf("hzToMel 0")
