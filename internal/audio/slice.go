@@ -1,11 +1,14 @@
 package audio
 
-import "fmt"
+import (
+	"fmt"
+	"math"
+)
 
 // Slice returns a time-based slice of audio in seconds.
 func Slice(a Audio, startSec, durationSec float64) (Audio, error) {
-	if startSec < 0 || durationSec < 0 {
-		return Audio{}, fmt.Errorf("slice: start and duration must be >= 0")
+	if math.IsNaN(startSec) || math.IsInf(startSec, 0) || math.IsNaN(durationSec) || math.IsInf(durationSec, 0) || startSec < 0 || durationSec < 0 {
+		return Audio{}, fmt.Errorf("slice: start and duration must be finite and >= 0")
 	}
 	if a.SampleRate <= 0 {
 		return Audio{}, fmt.Errorf("slice: invalid sample rate")
@@ -14,15 +17,17 @@ func Slice(a Audio, startSec, durationSec float64) (Audio, error) {
 		return Audio{}, fmt.Errorf("slice: empty samples")
 	}
 
-	start := int(startSec * float64(a.SampleRate))
-	if start >= len(a.Samples) {
+	startSamples := startSec * float64(a.SampleRate)
+	if startSamples >= float64(len(a.Samples)) {
 		return Audio{}, fmt.Errorf("slice: start beyond end")
 	}
+	start := int(startSamples)
 	end := len(a.Samples)
 	if durationSec > 0 {
-		end = start + int(durationSec*float64(a.SampleRate))
-		if end > len(a.Samples) {
-			end = len(a.Samples)
+		// Bound the sample count before conversion or addition can overflow.
+		durationSamples := durationSec * float64(a.SampleRate)
+		if durationSamples < float64(len(a.Samples)-start) {
+			end = start + int(durationSamples)
 		}
 		if end <= start {
 			return Audio{}, fmt.Errorf("slice: duration too short")

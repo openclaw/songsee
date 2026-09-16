@@ -52,7 +52,7 @@ If ffmpeg isn't on `PATH` and the file isn't WAV or MP3, songsee fails with a cl
 
 ## Slicing
 
-`--start` and `--duration` slice the decoded audio before analysis. Both are seconds (float). Negative values are rejected.
+`--start` and `--duration` slice the decoded audio before analysis. Both are seconds (float). Negative and non-finite values (`NaN`, `Inf`) are rejected. A start at or beyond the end fails with an error; a duration longer than the remaining audio is clamped to the end, including very large finite durations.
 
 ```bash
 songsee long.mp3 --start 60 --duration 15 -o minute1.jpg
