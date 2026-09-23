@@ -3,6 +3,7 @@
 ## 0.1.3 - Unreleased
 
 - Decoding: reject incomplete WAV sample frames instead of silently dropping trailing audio, and validate sample rates and bit depths even for empty payloads.
+- Docs: clarify output-extension precedence, explicit-format filenames, and automatic path-echo suppression when streaming to stdout.
 - Decoding: distinguish Layer III headers from raw ADTS AAC and MPEG Layer I/II so supported inputs reach ffmpeg instead of failing in the MP3 decoder.
 - Output: strip uppercase and mixed-case input extensions when deriving the default image name, producing `TRACK.jpg` from `TRACK.WAV`.
 - Tempogram: preserve the original onset timing when limiting time columns, keeping tempo rows accurate on longer audio instead of shifting or averaging away beats.

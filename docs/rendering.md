@@ -17,7 +17,7 @@ songsee track.mp3 -o spectro            # no extension; appends ".jpg" by defaul
 songsee - -o -                          # stdin in, encoded image to stdout
 ```
 
-If `--format` is set explicitly, it overrides extension-based inference. If `-o` already ends in `.png`, `.jpg`, or `.jpeg`, the encoder follows the extension regardless of `--format`.
+If `-o` ends in `.png`, `.jpg`, or `.jpeg`, the encoder follows the extension even when `--format` is set. Otherwise, `--format` selects the encoder; setting it explicitly also preserves the exact output path instead of appending an extension.
 
 When the input is `-` (stdin) and no `-o` is given, the output filename is `songsee.jpg` (or `.png`) in the current directory.
 
@@ -76,7 +76,7 @@ The base spectrogram converts magnitudes to decibels (`20·log10(mag + 1e-9)`) b
 
 ## Stdout streaming
 
-Pass `-o -` to write the encoded image bytes to stdout. Combine with `--quiet` to silence the trailing path echo:
+Pass `-o -` to write the encoded image bytes to stdout. The path echo is automatically suppressed for stdout output; `--quiet` is optional:
 
 ```bash
 songsee track.mp3 -o - --quiet > spectro.jpg
