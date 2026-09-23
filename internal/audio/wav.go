@@ -179,13 +179,17 @@ func decodeWavData(fmtChunk wavFormat, data []byte) (Audio, error) {
 	}
 
 	sampleRate := int(fmtChunk.SampleRate)
-	bits := int(fmtChunk.BitsPerSample)
-	if bits == 0 {
-		return Audio{}, errors.New("wav: invalid bits per sample")
+	if sampleRate <= 0 {
+		return Audio{}, errors.New("wav: invalid sample rate")
 	}
-	bytesPerSample := bits / 8
-	if bytesPerSample < 1 {
+	bits := int(fmtChunk.BitsPerSample)
+	if (format == 1 && bits != 8 && bits != 16 && bits != 24 && bits != 32) ||
+		(format == 3 && bits != 32 && bits != 64) {
 		return Audio{}, fmt.Errorf("wav: unsupported bit depth %d", bits)
+	}
+	frameSize := (bits / 8) * channels
+	if len(data)%frameSize != 0 {
+		return Audio{}, errors.New("wav: incomplete sample frame")
 	}
 
 	var samples []float64

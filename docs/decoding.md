@@ -23,6 +23,8 @@ Pure-Go WAV decoder. Handles:
 
 No external dependency, no ffmpeg roundtrip. The decoder validates the RIFF header and rejects truncated or forged `fmt` and `data` chunks whose declared size exceeds the remaining file bytes, before allocating or skipping their payloads. Ordinary native WAV files have no fixed duration or payload ceiling. `fmt` reads at most a 40-byte prefix and seeks the validated remainder. Unknown RIFF chunks are skipped by seeking, without allocating their payloads.
 
+The sample rate must be positive and the bit depth must match a supported PCM or float format, including for empty data chunks. Audio payloads must contain complete sample frames across all channels; an incomplete final frame is rejected instead of silently discarded. RIFF padding bytes are not audio samples.
+
 ## Native MP3
 
 Pure-Go MP3 decoder. Handles MPEG-1/2 Layer III with VBR and CBR. Output sample rate is whatever the file declares; songsee does not resample. The frame-header probe requires Layer III, so raw ADTS AAC and MPEG Layer I/II streams reach the ffmpeg fallback despite sharing a similar sync prefix.
