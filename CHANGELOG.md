@@ -2,6 +2,8 @@
 
 ## 0.1.3 - Unreleased
 
+- Decoding: treat local filenames containing colons as file paths in the ffmpeg fallback instead of interpreting them as URL protocols.
+
 - Decoding: reject incomplete WAV sample frames instead of silently dropping trailing audio, and validate sample rates and bit depths even for empty payloads.
 - Docs: clarify output-extension precedence, explicit-format filenames, and automatic path-echo suppression when streaming to stdout.
 - Decoding: distinguish Layer III headers from raw ADTS AAC and MPEG Layer I/II so supported inputs reach ffmpeg instead of failing in the MP3 decoder.
