@@ -1,15 +1,16 @@
 # Changelog
 
-## 0.1.3 - Unreleased
+## 0.1.3 - 2026-09-24
 
-- Decoding: treat local filenames containing colons as file paths in the ffmpeg fallback instead of interpreting them as URL protocols.
+**Highlights:** Decode local audio paths reliably, reject incomplete WAV frames safely, and preserve accurate tempo timing on longer tracks.
 
 - Decoding: reject incomplete WAV sample frames instead of silently dropping trailing audio, and validate sample rates and bit depths even for empty payloads.
-- Docs: clarify output-extension precedence, explicit-format filenames, and automatic path-echo suppression when streaming to stdout.
+- Slicing: reject non-finite times and bound sample indices before integer conversion, preventing oversized starts from panicking and large durations from overflowing instead of clamping to the remaining audio.
+- Tempogram: preserve the original onset timing when limiting time columns, keeping tempo rows accurate on longer audio instead of shifting or averaging away beats.
+- Decoding: treat local filenames containing colons as file paths in the ffmpeg fallback instead of interpreting them as URL protocols.
 - Decoding: distinguish Layer III headers from raw ADTS AAC and MPEG Layer I/II so supported inputs reach ffmpeg instead of failing in the MP3 decoder.
 - Output: strip uppercase and mixed-case input extensions when deriving the default image name, producing `TRACK.jpg` from `TRACK.WAV`.
-- Tempogram: preserve the original onset timing when limiting time columns, keeping tempo rows accurate on longer audio instead of shifting or averaging away beats.
-- Slicing: reject non-finite times and bound sample indices before integer conversion, preventing oversized starts from panicking and large durations from overflowing instead of clamping to the remaining audio.
+- Docs: clarify output-extension precedence, explicit-format filenames, and automatic path-echo suppression when streaming to stdout.
 
 ## 0.1.2 - 2026-09-05
 
