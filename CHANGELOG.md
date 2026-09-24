@@ -1,5 +1,7 @@
 # Changelog
 
+## 0.1.4 - Unreleased
+
 ## 0.1.3 - 2026-09-24
 
 **Highlights:** Decode local audio paths reliably, reject incomplete WAV frames safely, and preserve accurate tempo timing on longer tracks.
