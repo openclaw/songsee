@@ -3,6 +3,7 @@ package audio
 import (
 	"bytes"
 	"os"
+	"os/exec"
 	"path/filepath"
 	"strconv"
 	"strings"
@@ -190,4 +191,39 @@ func installHangingFFmpeg(t *testing.T) string {
 		t.Fatalf("WriteFile: %v", err)
 	}
 	return path
+}
+
+func TestDecodeFilePaths(t *testing.T) {
+	ffmpeg, err := exec.LookPath("ffmpeg")
+	if err != nil {
+		t.Skip("ffmpeg is required for the file-path integration test")
+	}
+	dir := t.TempDir()
+	name := "recording:take.flac"
+	cmd := exec.Command(ffmpeg, "-hide_banner", "-loglevel", "error",
+		"-i", "../../testdata/sine.mp3", filepath.Join(dir, name))
+	if output, err := cmd.CombinedOutput(); err != nil {
+		t.Fatalf("create FLAC fixture: %v: %s", err, output)
+	}
+	if err := os.MkdirAll(filepath.Join(dir, "media", "child"), 0o755); err != nil {
+		t.Fatal(err)
+	}
+	if err := os.Link(filepath.Join(dir, name), filepath.Join(dir, "media", "linked.flac")); err != nil {
+		t.Fatal(err)
+	}
+	if err := os.Symlink(filepath.Join(dir, "media", "child"), filepath.Join(dir, "link")); err != nil {
+		t.Fatal(err)
+	}
+	t.Chdir(dir)
+	for _, path := range []string{name, "link/../linked.flac"} {
+		t.Run(path, func(t *testing.T) {
+			pcm, err := DecodeFile(path, Options{FFmpegPath: ffmpeg})
+			if err != nil {
+				t.Fatalf("decode local filename: %v", err)
+			}
+			if pcm.SampleRate != 44100 || len(pcm.Samples) == 0 {
+				t.Fatalf("unexpected decoded audio: %d samples @ %d Hz", len(pcm.Samples), pcm.SampleRate)
+			}
+		})
+	}
 }

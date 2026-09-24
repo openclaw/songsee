@@ -9,7 +9,7 @@ songsee turns the input into mono `float64` samples before any analysis runs. Tw
 
 ## Inputs
 
-- **File path.** `songsee track.mp3` — any path the OS can open.
+- **File path.** `songsee track.mp3` — any path the OS can open. Local filenames containing colons (for example, `recording:take.flac`) remain file paths when passed to ffmpeg.
 - **Stdin.** `songsee -` — reads the encoded stream from stdin. Useful behind `cat`, `curl`, or shell pipelines.
 - **Mono mixdown.** Stereo or multichannel inputs are averaged to mono before windowing.
 
@@ -37,7 +37,7 @@ Anything that isn't WAV or MP3 — FLAC, AAC, M4A, OGG, Opus, video containers, 
 
 ```text
 ffmpeg -hide_banner -loglevel error \
-       -i <input> -f f32le -ac 1 -ar <sample-rate> -
+       -i file:<input> -f f32le -ac 1 -ar <sample-rate> -
 ```
 
 Tweak the pipeline with:

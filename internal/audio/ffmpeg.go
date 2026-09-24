@@ -30,7 +30,8 @@ func DecodeWithFFmpeg(path string, stdin io.Reader, sampleRate int, ffmpegPath s
 	if stdin != nil {
 		args = append(args, "-i", "pipe:0")
 	} else {
-		args = append(args, "-i", path)
+		// Select the file protocol without cleaning symlink-sensitive paths.
+		args = append(args, "-i", "file:"+path)
 	}
 	args = append(args, "-f", "f32le", "-ac", "1", "-ar", fmt.Sprintf("%d", sampleRate), "-")
 
