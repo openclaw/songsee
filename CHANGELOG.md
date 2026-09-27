@@ -2,6 +2,8 @@
 
 ## 0.1.4 - Unreleased
 
+- HPSS: reuse median buffers, select nine-point medians without sorting, and tile output writes, reducing allocations for a three-minute all-panel render from 3.18 GB to 639 MB with bit-exact output.
+
 ## 0.1.3 - 2026-09-24
 
 **Highlights:** Decode local audio paths reliably, reject incomplete WAV frames safely, and preserve accurate tempo timing on longer tracks.

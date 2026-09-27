@@ -160,55 +160,6 @@ func MFCCFromPower(spec *Spectrogram, power []float64, bands, coeffs int, minFre
 	return out
 }
 
-// HPSS separates harmonic and percussive content using median filters.
-func HPSS(spec *Spectrogram, timeWidth, freqWidth int) (harm, perc FeatureMap) {
-	if timeWidth <= 0 {
-		timeWidth = 9
-	}
-	if freqWidth <= 0 {
-		freqWidth = 9
-	}
-	frames := spec.Frames
-	bins := spec.Bins
-	harm = NewFeatureMap(frames, bins)
-	perc = NewFeatureMap(frames, bins)
-
-	timeRadius := timeWidth / 2
-	freqRadius := freqWidth / 2
-
-	timeBuf := make([]float64, 0, timeWidth)
-	freqBuf := make([]float64, 0, freqWidth)
-	for f := 0; f < frames; f++ {
-		for b := 0; b < bins; b++ {
-			timeBuf = timeBuf[:0]
-			for tf := f - timeRadius; tf <= f+timeRadius; tf++ {
-				if tf < 0 || tf >= frames {
-					continue
-				}
-				timeBuf = append(timeBuf, spec.Values[tf*bins+b])
-			}
-			freqBuf = freqBuf[:0]
-			for tb := b - freqRadius; tb <= b+freqRadius; tb++ {
-				if tb < 0 || tb >= bins {
-					continue
-				}
-				freqBuf = append(freqBuf, spec.Values[f*bins+tb])
-			}
-			hMed := median(timeBuf)
-			pMed := median(freqBuf)
-			hPow := dbToPower(hMed)
-			pPow := dbToPower(pMed)
-			src := dbToPower(spec.Values[f*bins+b])
-			den := hPow + pPow + 1e-12
-			hVal := src * hPow / den
-			pVal := src * pPow / den
-			harm.Set(f, b, powerToDB(hVal))
-			perc.Set(f, b, powerToDB(pVal))
-		}
-	}
-	return harm, perc
-}
-
 // SpectralFlux computes the spectral flux across frames.
 func SpectralFlux(spec *Spectrogram) []float64 {
 	frames := spec.Frames
@@ -416,15 +367,15 @@ func melToHz(mel float64) float64 {
 	return 700 * (math.Pow(10, mel/2595) - 1)
 }
 
+// median sorts its caller-owned scratch slice in place.
 func median(values []float64) float64 {
 	if len(values) == 0 {
 		return 0
 	}
-	tmp := append([]float64(nil), values...)
-	sort.Float64s(tmp)
-	mid := len(tmp) / 2
-	if len(tmp)%2 == 0 {
-		return 0.5 * (tmp[mid-1] + tmp[mid])
+	sort.Float64s(values)
+	mid := len(values) / 2
+	if len(values)%2 == 0 {
+		return 0.5 * (values[mid-1] + values[mid])
 	}
-	return tmp[mid]
+	return values[mid]
 }
