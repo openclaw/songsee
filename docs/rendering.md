@@ -74,6 +74,8 @@ Every panel runs an independent percentile clamp on its values before palette ma
 
 The base spectrogram converts magnitudes to decibels (`20·log10(mag + 1e-9)`) before normalizing.
 
+Loudness and flux curves reject non-finite feature values (`NaN` or infinity) with `non-finite loudness sample`. Rendering stops before writing an image.
+
 ## Stdout streaming
 
 Pass `-o -` to write the encoded image bytes to stdout. The path echo is automatically suppressed for stdout output; `--quiet` is optional:

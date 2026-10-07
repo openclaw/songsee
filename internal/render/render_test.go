@@ -3,6 +3,7 @@ package render
 import (
 	"image"
 	"image/color"
+	"math"
 	"testing"
 
 	"github.com/steipete/songsee/internal/dsp"
@@ -250,6 +251,16 @@ func TestLoudnessErrors(t *testing.T) {
 	}
 	if _, err := Loudness([]float64{1}, 1, 1, nil); err == nil {
 		t.Fatalf("expected palette error")
+	}
+}
+
+func TestLoudnessRejectsNonFinite(t *testing.T) {
+	palette := func(float64) color.RGBA { return color.RGBA{A: 255} }
+	for _, sample := range []float64{math.NaN(), math.Inf(1), math.Inf(-1)} {
+		_, err := Loudness([]float64{0.25, sample, 1}, 3, 16, palette)
+		if err == nil {
+			t.Fatalf("Loudness(%v) succeeded, want non-finite error", sample)
+		}
 	}
 }
 

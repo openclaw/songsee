@@ -2,6 +2,7 @@
 
 ## 0.1.4 - Unreleased
 
+- Rendering: reject non-finite loudness and flux values before converting them to pixel coordinates, returning a clear error instead of drawing invalid curves. Thanks @SebTardif.
 - HPSS: reuse median buffers, select nine-point medians without sorting, and tile output writes, reducing allocations for a three-minute all-panel render from 3.18 GB to 639 MB with bit-exact output.
 
 ## 0.1.3 - 2026-09-24

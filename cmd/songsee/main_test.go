@@ -97,6 +97,73 @@ func TestRunVersion(t *testing.T) {
 	}
 }
 
+func TestRunLoudnessFloatWAV(t *testing.T) {
+	for _, tc := range []struct {
+		name   string
+		sample float32
+		valid  bool
+	}{
+		{"finite", 0.5, true},
+		{"nan", float32(math.NaN()), false},
+		{"positive infinity", float32(math.Inf(1)), false},
+		{"negative infinity", float32(math.Inf(-1)), false},
+	} {
+		t.Run(tc.name, func(t *testing.T) {
+			const frames = 4096
+			wav := &bytes.Buffer{}
+			wav.WriteString("RIFF")
+			writeU32(wav, 36+frames*4)
+			wav.WriteString("WAVEfmt ")
+			writeU32(wav, 16)
+			writeU16(wav, 3) // IEEE float
+			writeU16(wav, 1)
+			writeU32(wav, 44100)
+			writeU32(wav, 44100*4)
+			writeU16(wav, 4)
+			writeU16(wav, 32)
+			wav.WriteString("data")
+			writeU32(wav, frames*4)
+			for i := 0; i < frames; i++ {
+				sample := float32(0.5 * math.Sin(2*math.Pi*440*float64(i)/44100))
+				if i == 1000 {
+					sample = tc.sample
+				}
+				writeU32(wav, math.Float32bits(sample))
+			}
+
+			output := filepath.Join(t.TempDir(), "loudness.png")
+			stdout, stderr := &bytes.Buffer{}, &bytes.Buffer{}
+			exit := run([]string{
+				"--viz", "loudness", "--window", "256", "--hop", "128",
+				"--width", "64", "--height", "32", "--output", output, "-",
+			}, wav, stdout, stderr)
+			if !tc.valid {
+				if exit != 1 || !strings.Contains(stderr.String(), "non-finite loudness sample") {
+					t.Fatalf("exit %d stderr=%q, want non-finite sample error", exit, stderr.String())
+				}
+				if _, err := os.Stat(output); !os.IsNotExist(err) {
+					t.Fatalf("unexpected output file: %v", err)
+				}
+				return
+			}
+			if exit != 0 {
+				t.Fatalf("exit %d stderr=%s", exit, stderr.String())
+			}
+			data, err := os.ReadFile(output)
+			if err != nil {
+				t.Fatal(err)
+			}
+			img, err := png.Decode(bytes.NewReader(data))
+			if err != nil {
+				t.Fatal(err)
+			}
+			if img.Bounds().Dx() != 64 || img.Bounds().Dy() != 32 || flatImage(img) {
+				t.Fatal("expected a non-flat 64 by 32 image")
+			}
+		})
+	}
+}
+
 func TestResolveVersion(t *testing.T) {
 	tests := []struct {
 		name     string

@@ -21,6 +21,10 @@ func Loudness(values []float64, width, height int, palette Palette) (*image.RGBA
 
 	maxVal := 0.0
 	for _, v := range values {
+		// int(NaN) is MinInt64 on amd64, and the pixel loop below would wrap.
+		if math.IsNaN(v) || math.IsInf(v, 0) {
+			return nil, fmt.Errorf("non-finite loudness sample")
+		}
 		if v > maxVal {
 			maxVal = v
 		}
